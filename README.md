@@ -1,6 +1,5 @@
 # OpenStatusPage
-An open source, self hosted status page and monitoring system with options for redundancy and scaleable deployments
-[![Tests](https://github.com/OpenStatusPage/OpenStatusPage/actions/workflows/pr-tests.yml/badge.svg)](https://github.com/OpenStatusPage/OpenStatusPage/actions/workflows/pr-tests.yml)
+An open source, self hosted status page and monitoring system with options for redundancy and scaleable deployments  
 
 # Quickstart
 Either run the `docker` command below direclty or use `docker-compose` to set up a container.  
