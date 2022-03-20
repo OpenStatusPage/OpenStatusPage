@@ -1,0 +1,60 @@
+﻿@using OpenStatusPage.Shared.Enumerations
+@using System.Globalization
+@using OpenStatusPage.Shared.Utilities
+
+<MudGrid>
+    <MudItem xs="12" Class="pb-0">
+        <div class="d-flex " style="height: 50px; margin-left: -4px; margin-right: -4px;">
+            @for(int day = 0; day < _daysVisible; day++)
+            {
+                <div class="status-bar-segment mud-height-full mx-1" style="flex-grow: 1;">
+                    @if(HasData(day))
+                    {
+                        var latestDay = day == (_daysVisible - 1);
+                        var classData = GetCssClass(day);
+                        var dayString = GetDayString(day);
+                        var unavailable = UnavailablePerDayPerService.GetValueOrDefault(day)?.MaxBy(x => x.Value).Value;
+                        var degraded = DegradedPerDayPerService.GetValueOrDefault(day)?.MaxBy(x => x.Value).Value;
+
+                        <MudPaper Class="@classData">
+                            <MudPaper Elevation="5" Class="pa-4 status-bar-tooltiptext">
+                                <MudText>@dayString</MudText>
+                                @if(unavailable.HasValue)
+                                {
+                                    if(latestDay && LastServiceStatus == ServiceStatus.Unavailable)
+                                    {
+                                        unavailable = unavailable.Value.Add(DateTimeOffset.UtcNow - LastNowProcessed);
+                                    }
+                                    <MudText>@($"Unavailable for{unavailable.Value.DurationString()}")</MudText>
+                                }
+                                @if(degraded.HasValue)
+                                {
+                                    if(latestDay && LastServiceStatus == ServiceStatus.Degraded)
+                                    {
+                                        degraded = degraded.Value.Add(DateTimeOffset.UtcNow - LastNowProcessed);
+                                    }
+                                    <MudText>@($"Degraded for{degraded.Value.DurationString()}")</MudText>
+                                }
+                                @if(!unavailable.HasValue && !degraded.HasValue)
+                                {
+                                    <MudText>Fully operational</MudText>
+                                }
+                            </MudPaper>
+                        </MudPaper>
+                    }
+                    else
+                    {
+                        <MudPaper Class="mud-height-full mud-paper-square status-color-nodata"></MudPaper>
+                    }
+                </div>
+            }
+        </div>
+    </MudItem>
+    <MudItem xs="12" Class="d-flex flex-wrap pt-0">
+        <MudText Typo="Typo.overline">@_daysVisible days ago</MudText>
+        <MudSpacer />
+        <MudText Typo="Typo.overline">@GetUptimePercentageString()% Uptime</MudText>
+        <MudSpacer />
+        <MudText Typo="Typo.overline">Today</MudText>
+    </MudItem>
+</MudGrid>

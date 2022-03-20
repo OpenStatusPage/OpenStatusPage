@@ -1,0 +1,9 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudText>@Text</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="@Color" Variant="Variant.Filled" OnClick="SubmitDialog" StartIcon="@ConfirmIcon">@(ConfirmText ?? "Confirm")</MudButton>
+        <MudButton OnClick="CancelDialog" StartIcon="@CancelIcon">@(CancelText ?? "Cancel")</MudButton>
+    </DialogActions>
+</MudDialog>

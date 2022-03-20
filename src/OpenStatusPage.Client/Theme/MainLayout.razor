@@ -1,0 +1,20 @@
+﻿@using OpenStatusPage.Client.Pages._Components
+
+@inherits LayoutComponentBase
+
+<MudThemeProvider Theme="DefaultTheme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<ErrorBoundary>
+    <ChildContent>
+        @Body
+    </ChildContent>
+    <ErrorContent>
+        <SelfRefresh />
+    </ErrorContent>
+</ErrorBoundary>
+
+@code {
+    public DefaultTheme DefaultTheme { get; set; } = new();
+}

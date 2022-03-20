@@ -1,0 +1,90 @@
+﻿@using OpenStatusPage.Client.Pages.Dashboard.Settings.Notifications
+@using OpenStatusPage.Client.Pages._Components
+@using OpenStatusPage.Shared.DataTransferObjects.StatusPages
+
+@page "/dashboard/settings"
+@layout DashboardBase
+
+<PageTitle>Settings</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium">
+    <DataLoader WaitFor="ApplicationSettings">
+        <MudText Typo="Typo.h4" Class="mb-2">Settings</MudText>
+        <MudTabs Elevation="3" ApplyEffectsToContainer="true" Class="flex-grow-1" PanelClass="pa-6" Border="true">  @**@
+            <MudTabPanel Icon="@Icons.Outlined.Apps" Text="General">
+                <EditForm EditContext="AppSettingsContext">
+                        
+                    <DataAnnotationsValidator/>
+
+                    <MudText Typo="Typo.body1">
+                        Select the default status page to be shown when opening <MudText Typo="Typo.overline">http(s)://yourstatuswebsite.org</MudText>
+                    </MudText>
+
+                    <MudAutocomplete 
+                        Style="margin-top: -10px"
+                        SearchFunc="@SearchStatusPageAsync"
+                        CoerceText="false"
+                        ToStringFunc="@(e => e == null ? null : e.Name)"
+                        @bind-Value="ApplicationSettingsViewModel.DefaultStatusPage" 
+                        For="@(() => ApplicationSettingsViewModel.DefaultStatusPage)"/>
+
+                    <MudText Typo="Typo.body1" Class="mt-4">
+                        Adjust how often the latest confirmed status of a monitor is flushed into the persistent storage. 
+                        This helps to know how long the last known status continued after the system has a full shutdown and reboots.
+                        Any non flushed status information might get lost otherwise.
+                        It is recommended to flush at least once a day.
+                        Use <b><span class="mud-primary-text">0</span></b> to only flush on status changes.
+                    </MudText>
+
+                    <div class="d-flex flex-wrap align-baseline justify-space-between mt-4">
+                        <MudNumericField
+                            Label="Status flush interval*"
+                            Placeholder="Persistent storage moniotor status flush interval"
+                            @bind-Value="ApplicationSettingsViewModel.StatusFlushIntervalField" 
+                            For="@(() => ApplicationSettingsViewModel.StatusFlushIntervalField)"/>
+
+                        <MudSelect @bind-Value="ApplicationSettingsViewModel.StatusFlushIntervalMuliplier" T="ulong" Label="Quantifier*" Dense="true" Margin="Margin.Dense" AnchorOrigin="Origin.TopCenter" TransformOrigin="Origin.BottomCenter">
+                            <MudSelectItem T="ulong" Value="1">Second(s)</MudSelectItem>
+                            <MudSelectItem T="ulong" Value="60">Minute(s)</MudSelectItem>
+                            <MudSelectItem T="ulong" Value="3600">Hour(s)</MudSelectItem>
+                            <MudSelectItem T="ulong" Value="86400">Day(s)</MudSelectItem>
+                        </MudSelect>
+                    </div>
+
+                    <MudText Typo="Typo.body1" Class="mt-4">
+                        Adjust how long data is stored in the persistent storage. Use <b><span class="mud-primary-text">0</span></b> to disable storage of that data type completly
+                    </MudText>
+
+                    <MudNumericField
+                        Label="Days monitor history*" 
+                        @bind-Value="ApplicationSettingsViewModel.DaysMonitorHistory" For="@(() => ApplicationSettingsViewModel.DaysMonitorHistory)"/>
+                    
+                    <MudNumericField 
+                        Class="mt-4"
+                        Label="Days incident history*" 
+                        @bind-Value="ApplicationSettingsViewModel.DaysIncidentHistory" For="@(() => ApplicationSettingsViewModel.DaysIncidentHistory)"/>
+
+                    <div class="d-flex flex-column">
+                        <AsyncButton Class="mt-4" ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" AsyncAction="SubmitAppsettingsChangeAsync" RunningText="Saving">
+                            Save
+                        </AsyncButton>
+                    </div>
+
+                </EditForm>
+            </MudTabPanel>
+            <MudTabPanel Icon="@Icons.Outlined.Notifications" Text="Notifications">
+                <ManageNotifications />
+            </MudTabPanel>
+            <MudTabPanel Icon="@Icons.Outlined.Info" Text="About">
+                <div>
+                    <MudText Typo="Typo.h3"><span class="mud-primary-text">Open</span>StatusPage</MudText>
+                    <MudText Typo="Typo.h6" Class="mt-2">Reliable. Scalable. Open Source.</MudText>
+                    <MudText Typo="Typo.h5" Class="mt-8">Version 1.0</MudText>
+                    <MudText Typo="Typo.body1" Class="mt-8">
+                        Created by Paul-Eric Lange as his master's thesis at the <a style="@($"color:#76B900;")" href="https://htw-berlin.de">HTW Berlin</a>.
+                    </MudText>
+                </div>
+            </MudTabPanel>
+        </MudTabs>
+    </DataLoader>
+</MudContainer>

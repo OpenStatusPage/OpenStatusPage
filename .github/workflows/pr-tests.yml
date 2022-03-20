@@ -1,0 +1,28 @@
+name: Pull request tests 
+
+on:
+  pull_request:
+    branches: [ development, release ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --no-restore
+
+    - name: Test
+      # Tests.Facts.Monitoring are excluded because IP connections on GH runners appear to be not working
+      run: dotnet test --no-build --verbosity normal --filter FullyQualifiedName\!~Tests.Facts.Monitoring

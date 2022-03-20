@@ -1,0 +1,70 @@
+﻿@inherits NotificationProvider
+
+<NotificationProvider ProviderModel=@SmtpEmailProviderModel />
+
+<MudTextField 
+    Label="Hostname" 
+    Class="mt-4"
+    @bind-Value="SmtpEmailProviderModel.Hostname" 
+    For="@(() => SmtpEmailProviderModel.Hostname)"/>
+    
+<MudNumericField
+    Label="Port"
+    Placeholder="Optional SMTP port"
+    Class="mt-4"
+    @bind-Value="SmtpEmailProviderModel.Port" 
+    For="@(() => SmtpEmailProviderModel.Port)"/>
+    
+<MudTextField 
+    Label="Username*" 
+    Class="mt-4"
+    @bind-Value="SmtpEmailProviderModel.Username" 
+    For="@(() => SmtpEmailProviderModel.Username)"/>    
+
+<MudTextField 
+    Label="Password*" 
+    Class="mt-4"
+    @bind-Value="SmtpEmailProviderModel.Password" 
+    For="@(() => SmtpEmailProviderModel.Password)"
+    InputType="@_passwordInput"
+    Adornment="Adornment.End" 
+    AdornmentIcon="@_passwordInputIcon" 
+    OnAdornmentClick="PasswordToggleShowAsync"/>
+    
+<MudTextField 
+    Label="Sender Name" 
+    Class="mt-4"
+    HelperText="The name that appears as sender. Default is OpenStatusPage."
+    @bind-Value="SmtpEmailProviderModel.DisplayName" 
+    For="@(() => SmtpEmailProviderModel.DisplayName)"/>
+
+<MudTextField 
+    Label="Sender Address" 
+    Class="mt-4"
+    HelperText="The address that appears as sender. Default is the SMTP username."
+    @bind-Value="SmtpEmailProviderModel.FromAddress" 
+    For="@(() => SmtpEmailProviderModel.FromAddress)"/>
+
+<MudTextField
+    Label="Receivers"
+    Class="mt-4"
+    Lines="4" 
+    Placeholder=@("name@example.org;seperated@list.org\nanother@line.org")
+    @bind-Value="SmtpEmailProviderModel.ReceiversDirect" 
+    For="@(() => SmtpEmailProviderModel.ReceiversDirect)"/>
+    
+<MudTextField
+    Label="Receivers CC"
+    Class="mt-4"
+    Lines="4" 
+    Placeholder=@("name@example.org;seperated@list.org\nanother@line.org")
+    @bind-Value="SmtpEmailProviderModel.ReceiversCC" 
+    For="@(() => SmtpEmailProviderModel.ReceiversCC)"/>
+    
+<MudTextField
+    Label="Receivers BCC"
+    Class="mt-4"
+    Lines="4" 
+    Placeholder=@("name@example.org;seperated@list.org\nanother@line.org")
+    @bind-Value="SmtpEmailProviderModel.ReceiversBCC" 
+    For="@(() => SmtpEmailProviderModel.ReceiversBCC)"/>

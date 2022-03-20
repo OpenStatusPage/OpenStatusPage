@@ -1,0 +1,12 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="SelectedName" Label="Name" Placeholder="An alias name to quickly find this provider" />
+        <MudSelect Class="mt-4" T="string" @bind-Value="SelectedValue" Label="Select the type of provider you want to add" AnchorOrigin="Origin.TopCenter" TransformOrigin="Origin.BottomCenter">
+            <MudSelectItem Value="@("Webhook")" />
+            <MudSelectItem Value="@("SMTP Email")" />
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton FullWidth="true" Variant="Variant.Filled" Color="Color.Success" Class="mx-4 mt-8" OnClick="AddProviderAsync">Add</MudButton>
+    </DialogActions>
+</MudDialog>

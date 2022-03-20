@@ -1,0 +1,91 @@
+﻿@using OpenStatusPage.Shared.DataTransferObjects.Monitors
+@using OpenStatusPage.Shared.DataTransferObjects.Monitors.Dns
+@using OpenStatusPage.Shared.DataTransferObjects.Monitors.Ssh
+@using OpenStatusPage.Shared.Enumerations
+
+@inherits MonitorBase
+
+<MonitorBase MonitorModel=@TcpMonitorModel />
+
+<MudTextField 
+    Label="Hostname*" 
+    Class="mt-4"
+    @bind-Value="TcpMonitorModel.Hostname" 
+    For="@(() => TcpMonitorModel.Hostname)"/>
+    
+<MudNumericField
+    Label="Port*"
+    Class="mt-4"
+    @bind-Value="TcpMonitorModel.Port" 
+    For="@(() => TcpMonitorModel.Port)"/>
+
+<MudText Typo="Typo.h5" Class="mt-8">Rules</MudText>
+
+@foreach (var rule in TcpMonitorModel.ResponseTimeRules.OrderBy(x => x.OrderIndex))
+{
+    <MudPaper Elevation="1" Class="pa-4 mt-4">
+        <MudGrid Spacing="0" Class="align-center justify-space-between">
+            <MudItem Class="flex-grow-1 flex-md-grow-0">
+                <MudHidden Breakpoint="Breakpoint.SmAndDown" Invert="true">
+                    <div class="d-flex">
+                        <MudButton Variant="Variant.Outlined" FullWidth="true" StartIcon="@Icons.Filled.KeyboardArrowUp" OnClick="() => MoveRuleUp(rule)">Move up</MudButton>
+                        <MudButton Class="ml-2" Variant="Variant.Outlined" FullWidth="true" StartIcon="@Icons.Filled.KeyboardArrowDown" OnClick="() => MoveRuleDown(rule)">Move down</MudButton>
+                    </div>
+                </MudHidden>
+                <MudHidden Breakpoint="Breakpoint.SmAndDown">
+                    <div class="d-flex flex-column mr-2">
+                        <MudIconButton Class="pa-0" Icon="@Icons.Filled.KeyboardArrowUp" OnClick="() => MoveRuleUp(rule)" />
+                        <MudIconButton Class="pa-0" Icon="@Icons.Filled.KeyboardArrowDown" OnClick="() => MoveRuleDown(rule)" />
+                    </div>
+                </MudHidden>
+            </MudItem>
+
+            <MudItem xs="12" md="7" Class="d-flex align-center">
+            @switch (rule)
+            {
+                case ResponseTimeRuleDto responseTimeRule:
+                {
+                    <MudText Class="mr-1" Style="white-space: nowrap">Connect time (ms)</MudText>
+
+                    <MudSelect Class="mr-1" Variant="Variant.Outlined" Margin="Margin.Dense" @bind-Value="responseTimeRule.ComparisonType" Adornment="Adornment.None">
+                        <MudSelectItem Value="@(NumericComparisonType.GreaterThan)">></MudSelectItem>
+                        <MudSelectItem Value="@(NumericComparisonType.GreaterThanOrEqual)">>=</MudSelectItem>
+                        <MudSelectItem Value="@(NumericComparisonType.Equal)">==</MudSelectItem>
+                        <MudSelectItem Value="@(NumericComparisonType.NotEqual)">!=</MudSelectItem>
+                        <MudSelectItem Value="@(NumericComparisonType.LessThanOrEqual)">@("<=")</MudSelectItem>
+                        <MudSelectItem Value="@(NumericComparisonType.LessThan)">@("<")</MudSelectItem>
+                    </MudSelect>
+
+                    <MudNumericField  Class="mr-1" Variant="Variant.Outlined" Margin="Margin.Dense" Placeholder="comparison value in ms" @bind-Value="responseTimeRule.ComparisonValue" Required="true" RequiredError="This field is required."/>
+                    break;
+                }
+            }
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <div class="d-flex">
+                    <MudSelect Label="Result status" FullWidth="false" Variant="Variant.Outlined" Margin="Margin.Dense" @bind-Value="rule.ViolationStatus">
+                        <MudSelectItem Value="@(ServiceStatus.Degraded)">
+                            <div class="d-flex align-center"><MudIcon Icon="@Icons.Outlined.WarningAmber" Color="Color.Warning" Class="mr-1" /> Degraded</div>
+                        </MudSelectItem>
+                        <MudSelectItem Value="@(ServiceStatus.Unavailable)">
+                            <div class="d-flex align-center"><MudIcon Icon="@Icons.Outlined.ErrorOutline" Color="Color.Error" Class="mr-1" /> Unavailable</div>
+                        </MudSelectItem>
+                    </MudSelect>
+
+                    <MudIconButton Icon="@Icons.Outlined.Close" Class="pa-0 ml-2" OnClick="() => RemoveRule(rule)" />
+                </div>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+}
+
+<MudPaper Elevation="1" Class="pa-4 mt-4">
+    <MudSelect Style="margin-top: -16px" Placeholder="Add a rule ..." T="string" Value="null" ValueChanged="(value) => OnRuleSelected(value)">
+        <MudSelectItem Value="@(nameof(ResponseTimeRuleDto))">Connect time</MudSelectItem>
+    </MudSelect>
+</MudPaper>
+
+<MudPaper Elevation="1" Class="pa-4 mt-4 d-flex">
+    <MudText Typo="Typo.body1"><b>Default rule</b> <span style="@($"color:{Colors.Green.Darken1};")">Operational</span> if connection was successful <span style="@($"color:{Colors.Red.Darken1};")">Unavailable</span> otherwise.</MudText>
+</MudPaper>

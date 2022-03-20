@@ -1,0 +1,204 @@
+﻿@using Microsoft.AspNetCore.Authorization
+@using OpenStatusPage.Client.Pages._Components
+@using OpenStatusPage.Shared.Enumerations
+@using OpenStatusPage.Shared.Utilities
+
+@page "/dashboard"
+
+@layout DashboardBase
+
+<PageTitle>Dashboard</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large">
+
+    <div class="d-flex justify-space-between align-center flex-wrap">
+        <MudText Typo="Typo.h4">Dashboard</MudText>
+
+        <div class="d-flex">
+            <div>
+                <MudText>Last refresh @(LastRefresh.HasValue ? LastRefresh.Value.ToLocalTime().ToString("T") : "loading")</MudText>
+                @if(RefreshInProgress)
+                {
+                    <MudText>Refreshing ...</MudText>
+                }
+                else
+                {
+                    <MudText>Autorefresh in @(RefreshSecondsRemaining.HasValue ? RefreshSecondsRemaining.Value.ToString() : "..") sec</MudText>
+                }
+            </div>
+            <MudIconButton Title="Refresh now" Disabled=@RefreshInProgress Class="ml-2 px-2" Icon="@Icons.Outlined.Refresh" Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Large" OnClick="TriggerRefreshAsync" />
+        </div>
+    </div>
+
+    <MudGrid Justify="Justify.SpaceBetween" Class="mt-4">
+        <MudItem xs="12" md="4">
+            <MudPaper Elevation="3" Class="d-flex align-center justify-space-between mud-width-full pa-4">
+                <MudIcon Icon="@Icons.Material.Outlined.Announcement" />
+                <div class="d-flex">
+                    @if(IncidentMetas == null)
+                    {
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Animation="Animation.Wave" Height="28px" Width="200px"/>
+                    }
+                    else
+                    {
+                        @if(ActiveIncidentsCount > 0)
+                        {
+                            <MudText Color="Color.Error" Typo="Typo.subtitle1"><b>@ActiveIncidentsCount</b></MudText>
+                        }
+                        else
+                        {
+                            <MudText Color="Color.Success" Typo="Typo.subtitle1"><b>No</b></MudText>
+                        }
+
+                        <MudText Typo="Typo.subtitle1">&nbsp;ongoing incident@(ActiveIncidentsCount != 1 ? "s" : "")</MudText>
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudPaper Elevation="3" Class="d-flex align-center justify-space-between mud-width-full pa-4">
+                <MudIcon Icon="@Icons.Material.Outlined.MonitorHeart" />
+                <div class="d-flex">
+                    @if(MonitorData == null)
+                    {
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Animation="Animation.Wave" Height="28px" Width="200px"/>
+                    }
+                    else
+                    {
+                        @if(MonitorMetas.Count > 0)
+                        {
+                            var color = Color.Default;
+
+                            @if(UnavailableMonitorsCount > 1)
+                            {
+                                color = Color.Error;
+                            }
+                            else if(DegradedMonitorsCount > 1)
+                            {
+                                color = Color.Warning;
+                            }
+                            else if(AvailableMonitorsCount == MonitorMetas.Count)
+                            {
+                                color = Color.Success;
+                            }
+
+                            <MudText Typo="Typo.subtitle1" Color="color"><b>@AvailableMonitorsCount</b>/<b>@MonitorMetas.Count</b></MudText>
+                            <MudText Typo="Typo.subtitle1">&nbsp;monitors are operational</MudText>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.subtitle1"><b>No</b> monitors configured</MudText>
+                        }
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudPaper Elevation="3" Class="d-flex align-center justify-space-between mud-width-full pa-4">
+                <MudIcon Icon="@Icons.Material.Outlined.Article" />
+                <div class="d-flex">
+                    @if(StatusPageMetas == null)
+                    {
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Animation="Animation.Wave" Height="28px" Width="200px"/>
+                    }
+                    else
+                    {
+                        @if(StatusPageMetas.Count > 0)
+                        {
+                            @if(PublicStatusPagesCount > 0)
+                            {
+                                <MudText Typo="Typo.subtitle1"><b>@PublicStatusPagesCount</b> public</MudText>
+                            }
+                            @if(PublicStatusPagesCount > 0 && (StatusPageMetas.Count - PublicStatusPagesCount) > 0)
+                            {
+                                <MudText Typo="Typo.subtitle1">&nbsp;and&nbsp;</MudText>
+                            }
+                            @if((StatusPageMetas.Count - PublicStatusPagesCount) > 0)
+                            {
+                                <MudText Typo="Typo.subtitle1"><b>@(StatusPageMetas.Count - PublicStatusPagesCount)</b> private</MudText>
+                            }
+                            <MudText Typo="Typo.subtitle1">&nbsp;status page@((((StatusPageMetas.Count - PublicStatusPagesCount) > 1) || (PublicStatusPagesCount > 1)) ? "s" : "")</MudText>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.subtitle1">No status pages</MudText>
+                        }
+                    }
+                </div>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    @if(MonitorData == null)
+    {
+        <MudSkeleton Class="mt-4" SkeletonType="SkeletonType.Rectangle" Animation="Animation.Wave" Height="250px" />
+    }
+    else
+    {
+    <MudTable Class="mt-4" Elevation="3" Items="MonitorData" Dense="true" Hover="true" Filter="new Func<MonitorDataStruct,bool>(FilterFunc)">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Monitor overview</MudText>
+            <MudSpacer />
+            <MudTextField Immediate="true" @bind-Value="_searchString" Placeholder="Search for monitors by type, name or status" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"/>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh><MudTableSortLabel SortBy="new Func<MonitorDataStruct,object>(x => x.Type)">Type</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<MonitorDataStruct,object>(x => x.Name)">Name</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<MonitorDataStruct,object>(x => x.Status)">Status</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<MonitorDataStruct,object>(x => x.NextExecution)">Interval</MudTableSortLabel></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Type" Style="white-space: nowrap">
+                <MudChip Label="true" Text="@context.Type"/>
+            </MudTd>
+            <MudTd DataLabel="Name" Style="white-space: nowrap">
+                <MudChip Label="true" Text="@context.Name"/>
+            </MudTd>
+            <MudTd DataLabel="Status" Style="white-space: nowrap">
+            @switch(context.Status)
+            {
+                case ServiceStatus.Available:
+                {
+                    <MudChip Label="true" Text="Available" Color="Color.Success"/>
+                    break;
+                }
+
+                case ServiceStatus.Degraded:
+                {
+                    <MudChip Label="true" Text="Degraded" Color="Color.Warning"/>
+                    break;
+                }
+                
+                case ServiceStatus.Unavailable:
+                {
+                    <MudChip Label="true" Text="Unavailable" Color="Color.Error"/>
+                    break;
+                }
+
+                default:
+                {
+                    <MudChip Label="true" Text="Unknown"/>
+                    break;
+                }
+            }
+            </MudTd>
+            <MudTd DataLabel="Check Interval" Style="white-space: nowrap">
+
+                @{
+                        while (context.NextExecution < DateTimeOffset.UtcNow) context.NextExecution += context.Interval;
+                        var duration = context.NextExecution - DateTimeOffset.UtcNow;
+                        if (duration.TotalSeconds < 1) duration = context.Interval;
+                }
+
+                <MudChip Label="true" Text="@($"Next check in {duration.DurationString()}")"/>
+
+                @*<MudChip Label="true" Text="@($"Refreshes every{context.Interval.DurationString()}")"/>*@
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+    }
+
+</MudContainer>

@@ -1,0 +1,194 @@
+﻿@using OpenStatusPage.Client.Pages.Dashboard.Monitors.Types
+@using OpenStatusPage.Client.Pages._Components
+@using OpenStatusPage.Shared.DataTransferObjects.NotificationProviders
+
+@page "/dashboard/monitors"
+@layout DashboardBase
+
+<PageTitle>Monitors</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large">
+    <MudText Typo="Typo.h4" Class="mb-2">Monitors</MudText>
+    <DataLoader WaitFor="MonitorMetaData">
+            <MudPaper Elevation="3" Class="pa-4">
+                <MudGrid>
+                    <MudItem xs=12 md="4" Class="align-self-stretch">
+                        <MudPaper Elevation="1" Class="pa-4 mud-height-full">
+
+                            <MudGrid>
+                                <MudItem xs=12 md="2" Class="d-flex align-center">
+                                    <MudHidden Breakpoint="Breakpoint.SmAndDown">
+                                        <MudIconButton Class="pa-2" Icon="@Icons.Outlined.Add" Color="@Color.Success" Variant="Variant.Outlined" OnClick="OpenAddMonitorAsync" />
+                                    </MudHidden>
+                                    <MudHidden Breakpoint="Breakpoint.MdAndUp">
+                                        <MudButton FullWidth="true" StartIcon="@Icons.Outlined.Add" Color="@Color.Success" Variant="Variant.Outlined" OnClick="OpenAddMonitorAsync">
+                                            Add Monitor
+                                        </MudButton>
+                                    </MudHidden>
+
+                                </MudItem>
+                                <MudItem xs=12 md="10">
+                                    <MudTextField 
+                                        @bind-Value="@SearchTerm" 
+                                        Placeholder="Monitor name or type" 
+                                        Adornment="Adornment.End" 
+                                        AdornmentIcon="@Icons.Filled.Search"
+                                        Clearable="true"
+                                        Variant="Variant.Outlined" 
+                                        Margin="Margin.Dense"
+                                        Immediate="true"/>
+                                </MudItem>
+                            </MudGrid>
+
+                            @if(MonitorMetaData.Count == 0)
+                            {
+                                <MudText Class="d-flex justify-center mt-4">
+                                    Add a monitor to continue
+                                </MudText>
+                            }
+                            <MudList Clickable="true" SelectedValue="@SelectedMonitor" SelectedValueChanged="(value) => OnMonitorSelectedAsync(value)" >
+                            @foreach (var monitor in MonitorMetaData.OrderBy(x => x.Name))
+                            {
+                                if (!(string.IsNullOrWhiteSpace(SearchTerm) ||
+                                    monitor.Name.Contains(SearchTerm, StringComparison.InvariantCultureIgnoreCase) ||
+                                    monitor.Type.Contains(SearchTerm, StringComparison.InvariantCultureIgnoreCase))) continue;
+
+                                <MudListItem @key="@monitor.Id" Value="monitor">
+                                    <MudHighlighter Class="mud-primary-text"
+                                         Style="background-color:transparent;font-weight:bold"
+                                         Text="@monitor.Name"
+                                         HighlightedText="@SearchTerm" />
+                                    <MudChip Label="true">@MetaToTypeString(monitor)</MudChip>
+                                </MudListItem>
+                            }
+                            </MudList>
+
+                        </MudPaper>
+                    </MudItem>
+
+                    <MudItem xs=12 md="8" Class="align-self-stretch">
+                        <MudPaper Elevation="1" Class="pa-4 mud-height-full">
+                            <MudForm @ref="EditForm" SuppressImplicitSubmission="true">
+                            @if(SelectedMonitor != null)
+                            {
+                                <MudGrid>
+                                    <MudItem xs="12" md="12" Class="align-self-stretch">
+                                        <div class="d-flex align-center mb-4">
+                                            <MudText Typo="Typo.h5">General Settings</MudText>
+                                            <MudChip Label="true">@MetaToTypeString(SelectedMonitor)</MudChip>
+                                        </div>
+                                    @{
+                                        switch(SelectedMonitor.Type.ToLowerInvariant())
+                                        {
+                                            case "dnsmonitor":
+                                            {
+                                                <DnsMonitor DnsMonitorModel=@(MonitorModel as DnsMonitor.DnsMonitorViewModel) />
+                                                break;
+                                            }
+                                            
+                                            case "httpmonitor":
+                                            {
+                                                <HttpMonitor HttpMonitorModel=@(MonitorModel as HttpMonitor.HttpMonitorViewModel) />
+                                                break;
+                                            }
+
+                                            case "pingmonitor":
+                                            {
+                                                <PingMonitor PingMonitorModel=@(MonitorModel as PingMonitor.PingMonitorViewModel) />
+                                                break;
+                                            }
+
+                                            case "sshmonitor":
+                                            {
+                                                <SshMonitor SshMonitorModel=@(MonitorModel as SshMonitor.SshMonitorViewModel) />
+                                                break;
+                                            }
+
+                                            case "tcpmonitor":
+                                            {
+                                                <TcpMonitor TcpMonitorModel=@(MonitorModel as TcpMonitor.TcpMonitorViewModel) />
+                                                break;
+                                            }
+
+                                            case "udpmonitor":
+                                            {
+                                                <UdpMonitor UdpMonitorModel=@(MonitorModel as UdpMonitor.UdpMonitorViewModel) />
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    </MudItem>
+                                    <MudItem xs="12" md="12" Class="align-self-stretch">
+                                        <MudText Typo="Typo.h5" Class="mb-4 mt-4">Worker tags</MudText>
+                                        @foreach(var tag in MonitorModel.Tags)
+                                        {
+                                            <MudPaper Class="py-2 px-4 mb-2 d-flex align-center justify-space-between">
+                                                <div class="d-flex">
+                                                    <MudIcon Icon="@Icons.Outlined.Tag" Color="Color.Info" />
+                                                    <MudText Class="ml-3">@tag</MudText>
+                                                </div>
+                                                <MudIconButton Icon="@Icons.Outlined.Close" Class="pa-0 ml-2" OnClick="() => RemoveTag(tag)" />
+                                            </MudPaper>
+                                        }
+                                        <MudPaper Class="mt-2 py-2 px-4">
+                                            <MudAutocomplete 
+                                                Style="margin-top: -16px"
+                                                T="string" 
+                                                SearchFunc="@SearchTagAsync"
+                                                ResetValueOnEmptyText="true"
+                                                CoerceText="true"
+                                                Placeholder="Add a tag to limit works to ..."
+                                                Value="null"
+                                                ValueChanged="(value) => AddTag(value)"/>
+                                        </MudPaper>
+                                    </MudItem>
+                                    <MudItem xs="12" md="12" Class="align-self-stretch">
+                                        <MudText Typo="Typo.h5" Class="mb-4 mt-4">Notifications</MudText>
+                                        @foreach(var provider in MonitorModel.NotificationProviderMetas)
+                                        {
+                                            <MudPaper Class="py-2 px-4 mb-2 d-flex align-center justify-space-between">
+                                                <div class="d-flex">
+                                                    <MudIcon Icon="@Icons.Outlined.NotificationsActive" Color="Color.Info" />
+                                                    <MudText Class="ml-3">@provider.Name</MudText>
+                                                </div>
+                                                <MudIconButton Icon="@Icons.Outlined.Close" Class="pa-0 ml-2" OnClick="() => RemoveNotificationProvider(provider)" />
+                                            </MudPaper>
+                                        }
+                                        <MudPaper Class="mt-2 py-2 px-4">
+                                            <MudAutocomplete 
+                                                Style="margin-top: -16px"
+                                                T="NotificationProviderMetaDto" 
+                                                SearchFunc="@SearchProviderAsync"
+                                                ToStringFunc="@(e => e == null ? null : e.Name)"
+                                                ResetValueOnEmptyText="true"
+                                                CoerceText="true"
+                                                Placeholder="Add a notifcation provider ..."
+                                                Value="null"
+                                                ValueChanged="(value) => AddNotificationProvider(value)"/>
+                                        </MudPaper>
+                                    </MudItem>
+                                </MudGrid>
+                                
+                                <div class="d-flex mt-4">
+                                    <AsyncButton StartIcon="@Icons.Outlined.DeleteForever" FullWidth="true" Variant="Variant.Outlined" Color="Color.Error" AsyncAction="RemoveMonitorAsync" RunningText="Deleting">
+                                        Delete
+                                    </AsyncButton>
+                                    <AsyncButton Class="ml-4" StartIcon="@Icons.Outlined.Save" FullWidth="true" Variant="Variant.Filled" Color="Color.Primary" AsyncAction="SubmitChangeAsync" RunningText="Saving">
+                                        Save
+                                    </AsyncButton>
+                                </div>
+                            }
+                            else
+                            {
+                                <MudText Class="d-flex justify-center">
+                                    Please select a monitor from the list to configure it.
+                                </MudText>
+                            }
+
+                            </MudForm>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+    </DataLoader>
+</MudContainer>

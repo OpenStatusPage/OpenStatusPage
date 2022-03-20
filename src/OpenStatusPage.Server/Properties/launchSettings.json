@@ -1,0 +1,111 @@
+{
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:60009",
+      "sslPort": 44390
+    }
+  },
+  "profiles": {
+    "IIS Express": {
+      "commandName": "IISExpress",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}"
+    },
+    "Launch Leader": {
+      "commandName": "Project",
+      "commandLineArgs": "--apikey=9a3dcef7-e0bc-4e30-98bc-b325f5866490 --bind=http://127.0.0.1:4242 --Storage:Driver=\"postgresql\" --Storage:ConnectionString=\"User ID=postgres;Host=localhost;Port=5432;Database=OpenStatusPage;\" --Tags=\"eu1,local,dedicated\"",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
+      "applicationUrl": "",
+      "dotnetRunMessages": true
+    },
+    "Launch Follower": {
+      "commandName": "Project",
+      "commandLineArgs": "--apikey=9a3dcef7-e0bc-4e30-98bc-b325f5866490 --bind=http://127.0.0.1:4242 --connect=http://127.0.0.1:6001 --Storage:Driver=\"postgresql\" --Storage:ConnectionString=\"User ID=postgres;Host=localhost;Port=5432;Database=OpenStatusPage;\"",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
+      "applicationUrl": "",
+      "dotnetRunMessages": true
+    },
+    "Launch Leader SQLite": {
+      "commandName": "Project",
+      "commandLineArgs": "--apikey=9a3dcef7-e0bc-4e30-98bc-b325f5866490 --bind=http://127.0.0.1:4242 --Storage:Driver=\"sqlite\" --Storage:ConnectionString=\"Data Source=local.db\"",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
+      "applicationUrl": "",
+      "dotnetRunMessages": true
+    },
+    "Launch Follower SQLite": {
+      "commandName": "Project",
+      "commandLineArgs": "--apikey=9a3dcef7-e0bc-4e30-98bc-b325f5866490 --bind=http://127.0.0.1:4242 --connect=http://127.0.0.1:6001 --Storage:Driver=\"sqlite\" --Storage:ConnectionString=\"Data Source=local.db\"",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
+      "applicationUrl": "",
+      "dotnetRunMessages": true
+    },
+    "Docker": {
+      "commandName": "Docker",
+      "launchBrowser": true,
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
+      "environmentVariables": {
+        "apikey": "9a3dcef7-e0bc-4e30-98bc-b325f5866490",
+        "Storage__ConnectionString": "Data Source=local.db",
+        "Storage__Driver": "sqlite",
+        "endpoint": "http://127.0.0.1:4242"
+      },
+      "httpPort": 4242,
+      "publishAllPorts": true,
+      "useSSL": false
+    },
+    "leader pi": {
+      "commandName": "Project",
+      "commandLineArgs": "--apikey=9a3dcef7-e0bc-4e30-98bc-b325f5866490 --bind=http://192.168.178.20:4242 --Storage:Driver=\"postgresql\" --Storage:ConnectionString=\"User ID=postgres;Host=localhost;Port=5432;Database=OpenStatusPage;\" --Tags=\"eu1,local,dedicated\" --timeout=10000",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
+      "applicationUrl": "",
+      "dotnetRunMessages": true
+    },
+    "follower pi": {
+      "commandName": "Project",
+      "commandLineArgs": "--apikey=9a3dcef7-e0bc-4e30-98bc-b325f5866490 --bind=http://192.168.178.20:4242 --connect=https://pi3-demo.openstatus.page --Storage:Driver=\"sqlite\" --Storage:ConnectionString=\"Data Source=local.db\" --timeout=10000",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
+      "applicationUrl": "",
+      "dotnetRunMessages": true
+    },
+    "leader pi sqlite": {
+      "commandName": "Project",
+      "commandLineArgs": "--apikey=9a3dcef7-e0bc-4e30-98bc-b325f5866490 --bind=http://192.168.178.20:4242 --Storage:Driver=\"sqlite\" --Storage:ConnectionString=\"Data Source=local.db\" --Tags=\"eu1,local,dedicated\" --timeout=10000",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
+      "applicationUrl": "",
+      "dotnetRunMessages": true
+    }
+  }
+}

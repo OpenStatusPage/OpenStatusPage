@@ -1,0 +1,109 @@
+﻿[*.cs]
+
+# CS8618: Ein Non-Nullable-Feld muss beim Beenden des Konstruktors einen Wert ungleich NULL enthalten. Erwägen Sie die Deklaration als Nullable.
+dotnet_diagnostic.CS8618.severity = silent
+
+# CS1998: Bei der asynchronen Methode fehlen "await"-Operatoren. Die Methode wird synchron ausgeführt.
+dotnet_diagnostic.CS1998.severity = silent
+
+# CA1816: Dispose-Methoden müssen SuppressFinalize aufrufen
+dotnet_diagnostic.CA1816.severity = silent
+
+# CS0168: Variable ist deklariert, wird jedoch niemals verwendet
+dotnet_diagnostic.CS0168.severity = silent
+
+# CS8602: Dereferenzierung eines möglichen Nullverweises.
+dotnet_diagnostic.CS8602.severity = silent
+
+# CS8603: Mögliche Nullverweisrückgabe.
+dotnet_diagnostic.CS8603.severity = silent
+
+# CA2254: Vorlage muss ein statischer Ausdruck sein
+dotnet_diagnostic.CA2254.severity = silent
+
+# IDE0059: Unnötige Zuweisung eines Werts.
+dotnet_diagnostic.IDE0059.severity = silent
+
+# IDE0060: Nicht verwendete Parameter entfernen
+dotnet_diagnostic.IDE0060.severity = silent
+
+#### Benennungsstile ####
+
+# Benennungsregeln
+
+dotnet_naming_rule.interface_should_be_begins_with_i.severity = suggestion
+dotnet_naming_rule.interface_should_be_begins_with_i.symbols = interface
+dotnet_naming_rule.interface_should_be_begins_with_i.style = begins_with_i
+
+dotnet_naming_rule.types_should_be_pascal_case.severity = suggestion
+dotnet_naming_rule.types_should_be_pascal_case.symbols = types
+dotnet_naming_rule.types_should_be_pascal_case.style = pascal_case
+
+dotnet_naming_rule.non_field_members_should_be_pascal_case.severity = suggestion
+dotnet_naming_rule.non_field_members_should_be_pascal_case.symbols = non_field_members
+dotnet_naming_rule.non_field_members_should_be_pascal_case.style = pascal_case
+
+dotnet_naming_rule.async_method_should_be_async_suffix.severity = warning
+dotnet_naming_rule.async_method_should_be_async_suffix.symbols = async_method
+dotnet_naming_rule.async_method_should_be_async_suffix.style = async_suffix
+
+dotnet_naming_rule.constant_field_should_be_constant_naming.severity = warning
+dotnet_naming_rule.constant_field_should_be_constant_naming.symbols = constant_field
+dotnet_naming_rule.constant_field_should_be_constant_naming.style = constant_naming
+
+dotnet_naming_rule.non_public_field_should_be_begins_with__.severity = warning
+dotnet_naming_rule.non_public_field_should_be_begins_with__.symbols = non_public_field
+dotnet_naming_rule.non_public_field_should_be_begins_with__.style = begins_with__
+
+# Symbolspezifikationen
+
+dotnet_naming_symbols.interface.applicable_kinds = interface
+dotnet_naming_symbols.interface.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
+dotnet_naming_symbols.interface.required_modifiers = 
+
+dotnet_naming_symbols.types.applicable_kinds = class, struct, interface, enum
+dotnet_naming_symbols.types.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
+dotnet_naming_symbols.types.required_modifiers = 
+
+dotnet_naming_symbols.non_field_members.applicable_kinds = property, event, method
+dotnet_naming_symbols.non_field_members.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
+dotnet_naming_symbols.non_field_members.required_modifiers = 
+
+dotnet_naming_symbols.async_method.applicable_kinds = method
+dotnet_naming_symbols.async_method.applicable_accessibilities = *
+dotnet_naming_symbols.async_method.required_modifiers = async
+
+dotnet_naming_symbols.constant_field.applicable_kinds = field
+dotnet_naming_symbols.constant_field.applicable_accessibilities = *
+dotnet_naming_symbols.constant_field.required_modifiers = const
+
+dotnet_naming_symbols.non_public_field.applicable_kinds = field
+dotnet_naming_symbols.non_public_field.applicable_accessibilities = internal, private, protected, protected_internal, private_protected, local
+dotnet_naming_symbols.non_public_field.required_modifiers = 
+
+# Benennungsstile
+
+dotnet_naming_style.pascal_case.required_prefix = 
+dotnet_naming_style.pascal_case.required_suffix = 
+dotnet_naming_style.pascal_case.word_separator = 
+dotnet_naming_style.pascal_case.capitalization = pascal_case
+
+dotnet_naming_style.begins_with_i.required_prefix = I
+dotnet_naming_style.begins_with_i.required_suffix = 
+dotnet_naming_style.begins_with_i.word_separator = 
+dotnet_naming_style.begins_with_i.capitalization = pascal_case
+
+dotnet_naming_style.begins_with__.required_prefix = _
+dotnet_naming_style.begins_with__.required_suffix = 
+dotnet_naming_style.begins_with__.word_separator = 
+dotnet_naming_style.begins_with__.capitalization = camel_case
+
+dotnet_naming_style.constant_naming.required_prefix = 
+dotnet_naming_style.constant_naming.required_suffix = 
+dotnet_naming_style.constant_naming.word_separator = _
+dotnet_naming_style.constant_naming.capitalization = all_upper
+
+dotnet_naming_style.async_suffix.required_prefix = 
+dotnet_naming_style.async_suffix.required_suffix = Async
+dotnet_naming_style.async_suffix.word_separator = 
+dotnet_naming_style.async_suffix.capitalization = pascal_case

@@ -1,0 +1,8 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="Name" Label="Title" Placeholder="Title of the status page" Required="true" RequiredError="This field is required."/>
+    </DialogContent>
+    <DialogActions>
+        <MudButton FullWidth="true" Variant="Variant.Filled" Color="Color.Success" Class="mx-4 mt-8" OnClick="AddProviderAsync">Add</MudButton>
+    </DialogActions>
+</MudDialog>

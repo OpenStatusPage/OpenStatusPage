@@ -1,0 +1,17 @@
+﻿
+/* Custom horizontal nav menu style replication */
+.mud-nav-link.active:not(.mud-nav-link-disabled) {
+    color: var(--mud-palette-primary);
+    /* background-color: var(--mud-palette-action-default-hover); */
+}
+
+:not(.mud-navmenu) > .mud-nav-item {
+    width: auto !important;
+    display: block !important;
+    /*margin-right: 16px;*/
+}
+
+.blur-text-area textarea {
+    color: transparent !important;
+    text-shadow: 0 0 10px rgba(0,0,0,0.5);
+}

@@ -1,0 +1,61 @@
+﻿<MudTextField Label="Name*" @bind-Value="MonitorModel.Name" For="@(() => MonitorModel.Name)"/>
+
+<MudSwitch Class="mt-4" Color="Color.Success" Label="@(MonitorModel.Enabled ? "Enabled" : "Disabled")" @bind-Checked="MonitorModel.Enabled" For="@(() => MonitorModel.Enabled)"/>
+
+<div class="d-flex flex-wrap align-baseline justify-space-between mt-4">
+    <MudNumericField
+        Label="Check Interval*"
+        Placeholder="How often to check the monitor status"
+        @bind-Value="MonitorModel.IntervalField" 
+        For="@(() => MonitorModel.IntervalField)"/>
+
+    <MudSelect @bind-Value="MonitorModel.IntervalMuliplier" T="ulong" Label="Quantifier*" Dense="true" Margin="Margin.Dense" AnchorOrigin="Origin.TopCenter" TransformOrigin="Origin.BottomCenter">
+        <MudSelectItem T="ulong" Value="1">Second(s)</MudSelectItem>
+        <MudSelectItem T="ulong" Value="60">Minute(s)</MudSelectItem>
+        <MudSelectItem T="ulong" Value="3600">Hour(s)</MudSelectItem>
+        <MudSelectItem T="ulong" Value="86400">Day(s)</MudSelectItem>
+    </MudSelect>
+</div>
+
+<MudNumericField
+    Label="Retries"
+    HelperText="If the first check fails, how often to retry. No value or 0 to disable"
+    Class="mt-4"
+    @bind-Value="MonitorModel.Retries" 
+    For="@(() => MonitorModel.Retries)"/>
+
+<div class="d-flex flex-wrap align-baseline justify-space-between mt-4">
+    <MudNumericField
+        Label="Retry Interval"
+        HelperText="How much wait time between retries"
+        @bind-Value="MonitorModel.RetryIntervalField" 
+        For="@(() => MonitorModel.RetryIntervalField)"/>
+
+    <MudSelect @bind-Value="MonitorModel.RetryIntervalMuliplier" T="ulong" Label="Quantifier" Dense="true" Margin="Margin.Dense" AnchorOrigin="Origin.TopCenter" TransformOrigin="Origin.BottomCenter">
+        <MudSelectItem T="ulong" Value="1">Second(s)</MudSelectItem>
+        <MudSelectItem T="ulong" Value="60">Minute(s)</MudSelectItem>
+        <MudSelectItem T="ulong" Value="3600">Hour(s)</MudSelectItem>
+        <MudSelectItem T="ulong" Value="86400">Day(s)</MudSelectItem>
+    </MudSelect>
+</div>
+
+<div class="d-flex flex-wrap align-baseline justify-space-between mt-4">
+    <MudNumericField
+        Label="Timeout"
+        HelperText="How long to wait for the check to conclude. The operating system might not respect this value"
+        @bind-Value="MonitorModel.TimeoutField" 
+        For="@(() => MonitorModel.TimeoutField)"/>
+
+    <MudSelect @bind-Value="MonitorModel.TimeoutMuliplier" T="ulong" Label="Quantifier" Dense="true" Margin="Margin.Dense" AnchorOrigin="Origin.TopCenter" TransformOrigin="Origin.BottomCenter">
+        <MudSelectItem T="ulong" Value="1">Millisecond(s)</MudSelectItem>
+        <MudSelectItem T="ulong" Value="1000">Second(s)</MudSelectItem>
+        <MudSelectItem T="ulong" Value="60000">Minute(s)</MudSelectItem>
+    </MudSelect>
+</div>
+
+<MudSelect T="int?" Required="true" RequiredError="You need to specify a worker amount." @bind-Value="MonitorModel.WorkerCount" Label="Worker count" HelperText="Select how many workers this monitor will be assigned to" Class="mt-4" Dense="true" Margin="Margin.Dense" AnchorOrigin="Origin.TopCenter" TransformOrigin="Origin.BottomCenter">
+    <MudSelectItem T="int?" Value="1">1 Worker (No redundancy)</MudSelectItem>
+    <MudSelectItem T="int?" Value="3">3 Workers (1 can fail)</MudSelectItem>
+    <MudSelectItem T="int?" Value="5">5 Workers (2 can fail)</MudSelectItem>
+    <MudSelectItem T="int?" Value="7">7 Workers (3 can fail)</MudSelectItem>
+</MudSelect>

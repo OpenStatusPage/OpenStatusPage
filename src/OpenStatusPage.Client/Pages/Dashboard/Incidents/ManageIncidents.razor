@@ -1,0 +1,208 @@
+﻿@using OpenStatusPage.Client.Pages._Components
+@using OpenStatusPage.Client.Pages._Components.Incidents
+@using OpenStatusPage.Shared.DataTransferObjects.Monitors
+@using OpenStatusPage.Shared.Enumerations
+@using OpenStatusPage.Shared.Utilities
+
+@page "/dashboard/incidents"
+@layout DashboardBase
+
+<PageTitle>Incidents</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large">
+    <MudText Typo="Typo.h4" Class="mb-2">Incidents</MudText>
+    <DataLoader WaitFor="IncidentMetas">
+            <MudPaper Elevation="3" Class="pa-4">
+                <MudGrid>
+                    <MudItem xs=12 md="5" Class="align-self-stretch">
+                        <MudPaper Elevation="1" Class="pa-4 mud-height-full">
+
+                            <div class="d-flex">
+                                <MudSwitch @bind-Checked="SearchResolved" Label="Show resolved" Color="Color.Info" Style="white-space: nowrap" />
+                                <MudTextField 
+                                    @bind-Value="@SearchTerm" 
+                                    Placeholder="Incident name"
+                                    Adornment="Adornment.End" 
+                                    AdornmentIcon="@Icons.Filled.Search"
+                                    Clearable="true"
+                                    Variant="Variant.Outlined" 
+                                    Margin="Margin.Dense"
+                                    Immediate="true"/>
+                            </div>
+                            <MudButton Class="mt-2" FullWidth="true" StartIcon="@Icons.Outlined.Add" Color="@Color.Success" Variant="Variant.Outlined" OnClick="OpenAddIncidentAsync">
+                                Add incident
+                            </MudButton>
+
+                            @if(IncidentMetas.Count == 0)
+                            {
+                                <MudText Class="d-flex justify-center mt-4">
+                                    Add an incident to continue
+                                </MudText>
+                            }
+                            <MudList Clickable="true" SelectedValue="@SelectedIncident" SelectedValueChanged="(value) => OnItemSelectedAsync(value)" >
+                            @foreach (var incident in IncidentMetas.OrderBy(x => x.Name))
+                            {
+                                if (!SearchResolved && incident.LatestStatus == IncidentStatus.Resolved) continue;
+
+                                if (!string.IsNullOrWhiteSpace(SearchTerm) && !incident.Name.Contains(SearchTerm, StringComparison.InvariantCultureIgnoreCase)) continue;
+
+                                <MudListItem @key="@incident.Id" Value="incident">
+                                    <MudHighlighter Class="mud-primary-text"
+                                         Style="background-color:transparent;font-weight:bold"
+                                         Text="@incident.Name"
+                                         HighlightedText="@SearchTerm" />
+                                    <MudChip Label="true" Color="@IncidentSeverityColor(incident.LatestSeverity)">@IncidentSeverityString(incident.LatestSeverity)</MudChip>
+                                    <MudChip Label="true">@IncidentStatusString(incident.LatestStatus)</MudChip>
+                                </MudListItem>
+                            }
+                            </MudList>
+
+                        </MudPaper>
+                    </MudItem>
+
+                    <MudItem xs=12 md="7" Class="align-self-stretch">
+                        <MudPaper Elevation="1" Class="pa-4 mud-height-full">
+                            <MudForm @ref="EditForm" Model="@IncidentModel" SuppressImplicitSubmission="true">
+                            @if(SelectedIncident != null)
+                            {
+                                <MudText Typo="Typo.h5">Incident history</MudText>
+
+                                @foreach (var statusUpdate in IncidentModel.Timeline.OrderBy(x => x.DateTime).PairwiseLeadingDefault())
+                                {
+                                    <IncidentStatusUpdate Data=@statusUpdate />
+                                }
+
+                                <MudDivider Class="my-4" />
+
+                                <MudText Typo="Typo.h5">Update incident</MudText>
+                                
+                                <MudTextField 
+                                    Label="Name" 
+                                    Class="mt-4" 
+                                    Required="true" 
+                                    RequiredError="This field is required" 
+                                    @bind-Value="IncidentModel.Name" 
+                                    For="@(() => IncidentModel.Name)"/>
+                                
+                                <MudSelect 
+                                    @bind-Value="IncidentModel.IncidentChangeitem.Severity" 
+                                    Class="mt-4" 
+                                    T="IncidentSeverity" 
+                                    Label="Incident Severity" 
+                                    AnchorOrigin="Origin.TopCenter" 
+                                    TransformOrigin="Origin.BottomCenter">
+                                    @foreach (IncidentSeverity item in Enum.GetValues(typeof(IncidentSeverity)))
+                                    {
+                                        <MudSelectItem Value="@item">@item</MudSelectItem>
+                                    }
+                                </MudSelect>
+
+                                if(IncidentModel.IncidentChangeitem.Severity == IncidentSeverity.Maintenance)
+                                {
+                                    <div class="mt-4 d-flex flex-grow-1 flex-wrap justify-center align-center">
+                                        <MudDatePicker 
+                                            Label="Start date" 
+                                            Class="mr-4" 
+                                            @bind-Date="IncidentModel.MaintenanceFromDate"
+                                            Required="true" 
+                                            RequiredError="This field is required."
+                                            For="@(() => IncidentModel.MaintenanceFromDate)"/>
+
+                                        <MudTimePicker 
+                                            Label="Start time" 
+                                            @bind-Time="IncidentModel.MaintenanceFromTime"
+                                            Required="true" 
+                                            RequiredError="This field is required."
+                                            For="@(() => IncidentModel.MaintenanceFromTime)"/>
+                                    </div>
+
+                                    <div class="mt-4 d-flex flex-grow-1 flex-wrap justify-center align-center">
+                                        <MudDatePicker 
+                                            Label="End date" 
+                                            Class="mr-4" 
+                                            @bind-Date="IncidentModel.MaintenanceUntilDate"
+                                            For="@(() => IncidentModel.MaintenanceUntilDate)"/>
+
+                                        <MudTimePicker 
+                                            Label="End time" 
+                                            @bind-Time="IncidentModel.MaintenanceUntilTime"
+                                            For="@(() => IncidentModel.MaintenanceUntilTime)"/>
+                                    </div>
+                                }
+                                else
+                                {
+                                    IncidentModel.MaintenanceFromDate = null;
+                                    IncidentModel.MaintenanceFromTime = null;
+                                    IncidentModel.MaintenanceUntilDate = null;
+                                    IncidentModel.MaintenanceUntilTime = null;
+                                }
+
+                                <MudSelect 
+                                    @bind-Value="IncidentModel.IncidentChangeitem.Status" 
+                                    Class="mt-4" 
+                                    T="IncidentStatus" 
+                                    Label="Incident Status" 
+                                    AnchorOrigin="Origin.TopCenter" 
+                                    TransformOrigin="Origin.BottomCenter">
+                                    @foreach (IncidentStatus item in Enum.GetValues(typeof(IncidentStatus)))
+                                    {
+                                        if (IncidentModel.IncidentChangeitem.Severity == IncidentSeverity.Maintenance &&
+                                            item != IncidentStatus.Created && 
+                                            item != IncidentStatus.Resolved) continue;
+
+                                        <MudSelectItem Value="@item">@item</MudSelectItem>
+                                    }
+                                </MudSelect>
+
+                                <div class="mt-4">
+                                    <MudText>Affected services</MudText>
+                                    <MudChipSet AllClosable="true" OnClose="(value) => IncidentModel.AffectedServices.Remove((string)value.Value)">
+                                        @foreach (var affectedService in IncidentModel.AffectedServices)
+                                        {
+                                            <MudChip Value="@affectedService" Text="@GetMonitorDisplayName(affectedService)" />
+                                        }
+                                    </MudChipSet>
+
+                                    <MudAutocomplete 
+                                        Style="margin-top: -12px"
+                                        T="MonitorMetaDto" 
+                                        SearchFunc="@SearchMonitorAsync"
+                                        ToStringFunc="@(e => e == null ? null : e.Name)"
+                                        ResetValueOnEmptyText="true"
+                                        CoerceText="true"
+                                        Placeholder="Add an affected service ..."
+                                        Value="null"
+                                        ValueChanged="(value) => IncidentModel.AffectedServices.Add(value.Id)" />
+                                </div>
+
+                                <MudTextField 
+                                    Label="Status update comment" 
+                                    HelperText="Provide additional information about the incident status update"
+                                    Class="mt-4"
+                                    Lines="3"
+                                    FullWidth="true"
+                                    @bind-Value="IncidentModel.IncidentChangeitem.AdditionalInformation" 
+                                    For="@(() => IncidentModel.IncidentChangeitem.AdditionalInformation)"/>
+
+                                <div class="d-flex mt-4">
+                                    <AsyncButton StartIcon="@Icons.Outlined.DeleteForever" FullWidth="true" Variant="Variant.Outlined" Color="Color.Error" AsyncAction="RemoveIncidentAsync" RunningText="Deleting">
+                                        Delete
+                                    </AsyncButton>
+                                    <AsyncButton Class="ml-4" StartIcon="@Icons.Outlined.Save" FullWidth="true" Variant="Variant.Filled" Color="Color.Primary" AsyncAction="SubmitChangeAsync" RunningText="Saving">
+                                        Save
+                                    </AsyncButton>
+                                </div>
+                            }
+                            else
+                            {
+                                <MudText Class="d-flex justify-center">
+                                    Please select an incident from the list to manage it.
+                                </MudText>
+                            }
+                            </MudForm>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+    </DataLoader>
+</MudContainer>

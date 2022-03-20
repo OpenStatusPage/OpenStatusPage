@@ -1,0 +1,25 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+
+<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+            <Authorizing>
+                <p>Authorizing ...</p>
+            </Authorizing>
+            <NotAuthorized>
+                <p>NotAuthorized!</p>
+            </NotAuthorized>
+        </AuthorizeRouteView>
+        @*<FocusOnNavigate RouteData="@routeData" Selector="h1" />*@
+    </Found>
+    <NotFound>
+        <PageTitle>Not found</PageTitle>
+        <LayoutView Layout="@typeof(MainLayout)">
+            <div style="margin-top: 64px;">
+                <h1 class="center-logo"><span style="color: #594ae2ff">Open</span>StatusPage</h1>
+                <center><h1>404 Page not found.</h1></center>
+                <center><h3>Are you sure you entered the address correctly?</h3></center>
+            </div>
+        </LayoutView>
+    </NotFound>
+</Router>

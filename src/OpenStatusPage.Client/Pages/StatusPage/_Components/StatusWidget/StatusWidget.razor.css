@@ -1,0 +1,65 @@
+﻿::deep .status-bar-segment .mud-tooltip-root {
+    height: 100%;
+    width: 100%;
+}
+
+::deep .status-color-nodata {
+    background-color: var(--mud-palette-grey-lighter) !important;
+}
+
+::deep .status-color-no-outage {
+    background-color: var(--mud-palette-success) !important;
+}
+
+::deep .status-color-partial-outage {
+    background-color: var(--mud-palette-warning) !important;
+}
+
+::deep .status-color-full-outage {
+    background-color: var(--mud-palette-error) !important;
+}
+
+::deep .status-bar-segment-zoom {
+    transition: transform .2s;
+}
+
+    ::deep .status-bar-segment-zoom:hover {
+        -ms-transform: scale(1.15); /* IE 9 */
+        -webkit-transform: scale(1.15); /* Safari 3-8 */
+        transform: scale(1.15);
+    }
+
+/*::deep .status-bar-tooltip {
+    position: relative;
+}
+
+    ::deep .status-bar-tooltip .status-bar-tooltiptext {
+        visibility: hidden;
+        position: absolute;
+        z-index: 1;
+        bottom: 120%;*/
+        /*        left: -500%;*/
+    /*}
+
+    ::deep .status-bar-tooltip:hover .status-bar-tooltiptext {
+        visibility: visible;
+    }*/
+
+
+::deep .status-bar-tooltip {
+    position: relative;
+}
+
+    ::deep .status-bar-tooltip .status-bar-tooltiptext {
+        white-space: nowrap;
+        display: none;
+    }
+
+    ::deep .status-bar-tooltip:hover .status-bar-tooltiptext {
+        display: inline-block;
+        position: absolute;
+        bottom: 120%;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+    }

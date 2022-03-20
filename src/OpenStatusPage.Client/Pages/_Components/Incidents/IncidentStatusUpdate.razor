@@ -1,0 +1,41 @@
+﻿@using System.Globalization
+@using OpenStatusPage.Shared.Enumerations
+@using static OpenStatusPage.Shared.DataTransferObjects.Incidents.IncidentDto
+
+<div class="d-flex flex-wrap align-baseline">
+    
+    @{
+        var statusTitle = Data.Current.Status switch
+        {
+            IncidentStatus.Created => "Created",
+            IncidentStatus.Acknowledged => "Acknowledged",
+            IncidentStatus.Investigating => "Investigating",
+            IncidentStatus.Monitoring => "Monitoring",
+            IncidentStatus.Resolved => "Resolved",
+            _ => "Unknown"
+        };
+    }
+    
+    <div class="d-flex align-baseline mr-2">
+        <MudText Typo="Typo.body1" Class="mr-2">@Data.Current.DateTime.ToLocalTime().ToString("g", CultureInfo.CurrentUICulture)</MudText>
+        <MudText Typo="Typo.subtitle1"><b>@statusTitle</b></MudText>
+    </div>
+
+    @if(!string.IsNullOrWhiteSpace(Data.Current.AdditionalInformation))
+    {
+        <MudText Typo="Typo.body1">@Data.Current.AdditionalInformation</MudText>
+    }
+    else
+    {
+        <MudText Typo="Typo.body1"><i>Status was updated.</i></MudText>
+    }
+
+</div>
+
+@code {
+    /// <summary>
+    /// Incident data for the summary
+    /// </summary>
+    [Parameter]
+    public (IncidentTimelineItem Previous, IncidentTimelineItem Current) Data { get; set; }
+}

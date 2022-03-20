@@ -1,0 +1,91 @@
+﻿@using OpenStatusPage.Shared.DataTransferObjects.Incidents
+@using OpenStatusPage.Shared.Enumerations
+@using OpenStatusPage.Shared.Utilities
+
+<MudExpansionPanel @bind-IsExpanded="IsExpanded">
+    <TitleContent>
+        <MudGrid>
+            <MudItem xs="12" Class="d-flex flex-wrap">
+                <div class="d-flex align-center mr-4">
+                    
+                    @{
+                        var maxSeverity = Incident.Timeline.MaxBy(x => x.Severity)?.Severity ?? IncidentSeverity.Information;
+                        
+                        var title = Incident.Name ?? maxSeverity switch
+                        {
+                            IncidentSeverity.Information => "Information",
+                            IncidentSeverity.Maintenance => "Maintenance",
+                            IncidentSeverity.Minor => "Minor Incident",
+                            IncidentSeverity.Major => "Major Incident",
+                            _ => "Unknown"
+                        };
+
+                        var icon = maxSeverity switch
+                        {
+                            IncidentSeverity.Information => Icons.Outlined.Info,
+                            IncidentSeverity.Maintenance => Icons.Outlined.MiscellaneousServices,
+                            IncidentSeverity.Minor => Icons.Outlined.WarningAmber,
+                            IncidentSeverity.Major => Icons.Outlined.ErrorOutline,
+                            _ => Icons.Outlined.QuestionMark
+                        };
+
+                        var iconColor = maxSeverity switch
+                        {
+                            IncidentSeverity.Information => Color.Info,
+                            IncidentSeverity.Maintenance => Color.Info,
+                            IncidentSeverity.Minor => Color.Warning,
+                            IncidentSeverity.Major => Color.Error,
+                            _ => Color.Default
+                        };
+                    }
+
+                    <MudIcon Icon="@icon" Color="@iconColor" />
+
+                    <MudText Class="ml-2">@title</MudText>
+                </div>
+                <MudText Class="mr-4">@GetDateStartedString()</MudText>
+                <MudText Class="mr-4">@GetDurationString()</MudText>
+            </MudItem>
+
+            @if(Preview && !IsExpanded)
+            {
+                var lastUpdates = Incident.Timeline.OrderByDescending(x => x.DateTime).Take(2).ToList();
+            
+                if(lastUpdates != null)
+                {
+                    <MudItem xs="12" Class="pt-0">
+                        <IncidentStatusUpdate Data=@lastUpdates.PairwiseLeadingDefault().FirstOrDefault() />
+                    </MudItem>
+                }
+            }
+
+        </MudGrid>
+    </TitleContent>
+
+    <ChildContent>
+        <MudGrid Class="mt-0">
+        @foreach (var statusUpdate in Incident.Timeline.OrderByDescending(x => x.DateTime).PairwiseLeadingDefault())
+        {
+             <MudItem xs="12" Class="pt-0">
+                <IncidentStatusUpdate Data=@statusUpdate />
+            </MudItem>
+        }     
+
+        @{
+            var affectedServices = GetAffectedServicesStrings();
+        }
+
+        @if(affectedServices.Count > 0)
+        {
+            <MudItem xs="12" Class="pt-0 d-flex flex-wrap align-center">
+                <MudText Typo="Typo.overline">Affected services: </MudText>
+                @foreach (var affectedService in affectedServices)
+                {
+                    <MudChip Size="Size.Small">@affectedService</MudChip>
+                }
+            </MudItem>
+        }
+
+        </MudGrid>
+    </ChildContent>
+</MudExpansionPanel>

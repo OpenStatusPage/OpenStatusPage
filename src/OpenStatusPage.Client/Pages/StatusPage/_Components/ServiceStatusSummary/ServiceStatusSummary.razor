@@ -1,0 +1,114 @@
+﻿@using OpenStatusPage.Client.Pages.StatusPage._Components.StatusWidget
+@if(ServiceHistories == null)
+{
+    <MudPaper Elevation="3" Class="pa-4 mt-4">
+        <MudGrid Justify="Justify.SpaceBetween">
+            <MudItem xs="12" Class="d-flex flex-wrap">
+                <div class="d-flex align-center">
+
+                @if(Summary.LabeledMonitors.Count > 1)
+                {
+                    <MudIcon Icon="@Icons.Outlined.AddBox" Class="mr-2" Style=@($"color:{Colors.Grey.Lighten1}") />
+                }
+
+                    <MudText Typo="Typo.h6">@Summary.Title</MudText>
+                </div>
+                <MudSpacer />
+                <div class="d-flex align-center">
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Animation="Animation.Wave" Width="250px" Height="100%" />
+                </div>
+            </MudItem>
+
+        @if(Summary.LabeledMonitors.Count > 1 && Summary.ShowHistory)
+        {
+            <MudItem xs="12" Class="pt-0">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Animation="Animation.Wave" Width="100%" Height="50px" />
+            </MudItem>
+            <MudItem xs="12" Class="pt-0">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Animation="Animation.Wave" Width="100%" Height="20px" />
+            </MudItem>
+        }
+
+        </MudGrid>
+    </MudPaper>
+}
+else if(Summary.LabeledMonitors.Count == 1) //Single service history
+{
+    var singleKey = ComputeHistoryKey(ServiceHistories);
+
+    <MudPaper Elevation="3" Class="pa-4 mt-4">
+        <MudGrid>
+            <MudItem xs="12" Class="d-flex flex-wrap">
+                <div class="d-flex align-center">
+                    <MudText Typo="Typo.h6">@Summary.LabeledMonitors[0].Label</MudText>
+                </div>
+                <MudSpacer />
+                <CurrentStatusWidget @key="singleKey" ServiceHistory=@ServiceHistories />
+            </MudItem>
+            @if(Summary.ShowHistory)
+            {
+                <MudItem xs="12" Class="py-0">
+                    <StatusWidget @key="singleKey" Segments=@ServiceHistories Days=@Days ShowOutageDetails="true" />
+                </MudItem>
+            }
+        </MudGrid>
+    </MudPaper>
+}
+else
+{
+    var aggregateKey = ComputeHistoryKey(ServiceHistories);
+
+    <MudExpansionPanels Elevation="3" Class="mt-4">
+        <MudExpansionPanel HideIcon="true" @bind-IsExpanded="IsExpanded">
+            <TitleContent>
+                <MudGrid>
+                    <MudItem xs="12" Class="d-flex flex-wrap px-1">
+                        <div class="d-flex align-center">
+                            <MudIcon Class="mr-1" Icon="@(IsExpanded ? Icons.Outlined.IndeterminateCheckBox : Icons.Outlined.AddBox)" />
+                            <MudText Typo="Typo.h6">@Summary.Title</MudText>
+                        </div>
+                        @if (Summary.LabeledMonitors.Count > 0)
+                        {
+                            <MudSpacer />
+                            <div hidden="@IsExpanded" @key="aggregateKey">
+                                <CurrentStatusWidget ServiceHistory=@ServiceHistories />
+                            </div>
+                        }
+                    </MudItem>
+                    @if (Summary.ShowHistory && Summary.LabeledMonitors.Count > 0)
+                    {
+                        <MudItem xs="12" Class="pb-0">
+                            <div hidden="@IsExpanded" @key="aggregateKey">
+                                <StatusWidget Segments=@ServiceHistories Days=@Days />
+                            </div>
+                        </MudItem>
+                    }
+                </MudGrid>
+            </TitleContent>
+            <ChildContent>
+                <MudDivider Class="mb-4" />
+                @foreach (var service in Summary.LabeledMonitors.OrderBy(x => x.OrderIndex))
+                {
+                    var serviceHistory = ServiceHistories.Where(x => x.ServiceId == service.MonitorId).ToList();
+                    var serviceHistoryKey = ComputeHistoryKey(serviceHistory);
+
+                    <MudGrid Class="pb-2">
+                        <MudItem xs="12" Class="d-flex flex-wrap pb-0">
+                            <div class="d-flex align-center">
+                                <MudText Typo="Typo.h6">@service.Label</MudText>
+                            </div>
+                            <MudSpacer />
+                            <CurrentStatusWidget @key="serviceHistoryKey" ServiceHistory=@serviceHistory />
+                        </MudItem>
+                        @if(Summary.ShowHistory)
+                        {
+                            <MudItem xs="12" Class="pb-0">
+                                <StatusWidget @key="serviceHistoryKey" Segments=@serviceHistory Days=@Days ShowOutageDetails="true" />
+                            </MudItem>
+                        }
+                    </MudGrid>
+                }
+            </ChildContent>
+        </MudExpansionPanel>
+    </MudExpansionPanels>
+}

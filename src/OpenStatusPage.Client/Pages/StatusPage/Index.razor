@@ -1,0 +1,346 @@
+﻿@using OpenStatusPage.Client.Pages._Components.Incidents
+@using OpenStatusPage.Client.Pages.StatusPage._Components.ServiceStatusSummary
+@using OpenStatusPage.Client.Pages.StatusPage._Components.StatusWidget
+@using OpenStatusPage.Shared.Enumerations
+
+@page "/"
+@page "/{StatusPageId}"
+@layout _StatusPageBase
+
+@if(Unauthorized)
+{
+    <MudContainer MaxWidth="MaxWidth.Small" Class="mt-8">
+        
+        <EditForm Model="@LoginViewModel" OnValidSubmit="SubmitLoginFormAsync">
+            <DataAnnotationsValidator/>
+            <MudCard Elevation="3">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h5">Login required</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudTextField Label="Password" HelperText="Please enter the password to access this status page."
+                                    @bind-Value="LoginViewModel.Password" For="@(() => LoginViewModel.Password)" InputType="InputType.Password"/>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Login</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </EditForm>
+
+        <div class="d-flex justify-end mt-1">
+            <a href="https://openstatus.page"><MudText Typo="Typo.caption">Powered by <span class="mud-primary-text">Open</span>StatusPage</MudText></a>
+        </div>
+
+    </MudContainer>
+}
+else if(StatusPageConfiguration == null)
+{
+    <PageTitle>Loading ...</PageTitle>
+    <MudText Typo="Typo.h3">Loading ...</MudText>
+
+    <MudPaper Elevation="3" Class="pa-4 mt-4">
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Animation="Animation.Wave" Height="100px" />
+    </MudPaper>
+
+    <MudPaper Elevation="3" Class="pa-4 mt-4">
+        @for(int nFakeStatusBars = 0; nFakeStatusBars < 3; nFakeStatusBars++)
+        {
+            <MudGrid Justify="Justify.SpaceBetween" Class=@(nFakeStatusBars > 0 ? "mt-4" : "")>
+                <MudItem xs="12" Class="d-flex flex-wrap pb-0">
+                    <div class="d-flex align-center">
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Animation="Animation.Wave" Width="250px" Height="20px" />
+                    </div>
+                    <MudSpacer />
+                    <div class="d-flex align-center">
+                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Animation="Animation.Wave" Width="250px" Height="100%" />
+                    </div>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Animation="Animation.Wave" Width="100%" Height="50px" />
+                </MudItem>
+                <MudItem xs="12" Class="pt-0">
+                    <MudSkeleton SkeletonType="SkeletonType.Rectangle" Animation="Animation.Wave" Width="100%" Height="20px" />
+                </MudItem>
+            </MudGrid>
+        }
+    </MudPaper>
+
+    <div class="d-flex justify-end mt-1">
+        <a href="https://openstatus.page"><MudText Typo="Typo.caption">Powered by <span class="mud-primary-text">Open</span>StatusPage</MudText></a>
+    </div>
+}
+else
+{
+    <PageTitle>@StatusPageConfiguration.Name</PageTitle>
+    <div class="d-flex justify-space-between align-center flex-wrap">
+        <MudText Typo="Typo.h3">@StatusPageConfiguration.Name</MudText>
+
+        <div class="d-flex mt-2">
+            <div>
+                <MudText>Last refresh @(LastRefresh.HasValue ? LastRefresh.Value.ToLocalTime().ToString("T") : "loading")</MudText>
+                @if(RefreshInProgress)
+                {
+                    <MudText>Refreshing ...</MudText>
+                }
+                else
+                {
+                    <MudText>Autorefresh in @(RefreshSecondsRemaining.HasValue ? RefreshSecondsRemaining.Value.ToString() : "..") sec</MudText>
+                }
+            </div>
+            <MudIconButton Title="Refresh now" Disabled=@RefreshInProgress Class="ml-2 px-2" Icon="@Icons.Outlined.Refresh" Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Large" OnClick="TriggerRefreshAsync" />
+        </div>
+    </div>
+
+    @if(!string.IsNullOrWhiteSpace(StatusPageConfiguration.Description))
+    {
+        <MudPaper Elevation="3" Class="pa-4 mt-4">
+            @((MarkupString)GetDescriptionMarkUpString())
+        </MudPaper>
+    }
+
+    @if(StatusPageConfiguration.EnableGlobalSummary)
+    {
+        <div class="mt-12">
+
+        @if(OngoingIncidents == null || ServiceStatusHistories == null)
+        {
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Animation="Animation.Wave" Height="64px" />
+        }
+        else 
+        {
+            if(OngoingIncidents.Count == 0 && CurrentWorstServiceStatus == ServiceStatus.Available)
+            {
+                <MudPaper Elevation="3" Class="pa-4 mt-4 mud-success">
+                    <div class="d-flex align-center">
+                        <MudIcon Icon="@Icons.Outlined.Check" Class="darken-1 shades-text text-white mr-2" />
+                        <MudText Typo="Typo.h5" Class="darken-1 shades-text text-white">All Systems Operational</MudText>
+                    </div>
+                </MudPaper>
+            }
+            else
+            {
+                var cssClass = $"pa-4 mt-4";
+                var globalStatusIcon = Icons.Outlined.QuestionMark;
+
+                if(CurrentMaxIncidentSeverity == IncidentSeverity.Major || CurrentWorstServiceStatus == ServiceStatus.Unavailable)
+                {
+                    cssClass += " mud-error";
+                    globalStatusIcon = Icons.Outlined.ErrorOutline;
+                }
+                else if(CurrentMaxIncidentSeverity == IncidentSeverity.Minor || CurrentWorstServiceStatus == ServiceStatus.Degraded)
+                {
+                    cssClass += " mud-warning";
+                    globalStatusIcon = Icons.Outlined.WarningAmber;
+                }
+                else if(CurrentMaxIncidentSeverity == IncidentSeverity.Maintenance)
+                {
+                    cssClass += " mud-info";
+                    globalStatusIcon = Icons.Outlined.MiscellaneousServices;
+                }
+                else if(CurrentMaxIncidentSeverity == IncidentSeverity.Information)
+                {
+                    cssClass += " mud-info";
+                    globalStatusIcon = Icons.Outlined.Info;
+                }
+                else
+                {
+                    cssClass += " mud-dark";
+                }
+
+                var globalStatus = CurrentMaxIncidentSeverity switch
+                {
+                    IncidentSeverity.Information => "Information",
+                    IncidentSeverity.Maintenance => "Maintenance",
+                    IncidentSeverity.Minor => "Minor Incidents",
+                    IncidentSeverity.Major => "Major Incidents",
+                    _ => null
+                };
+
+                //If incidents could not provide the status information, the service status will
+                if(string.IsNullOrEmpty(globalStatus))
+                {
+                    globalStatus = CurrentWorstServiceStatus switch
+                    {
+                        ServiceStatus.Degraded => "Some services are degraded",
+                        ServiceStatus.Unavailable => "Some services are unavailable",
+                        _ => "Unknown Status"
+                    };
+                }
+
+                <MudPaper Elevation="3" Class="@cssClass">
+                    <div class="d-flex align-center">
+                        <MudIcon Icon="@globalStatusIcon" Class="darken-1 shades-text text-white mr-2" />
+                        <MudText Typo="Typo.h5" Class="darken-1 shades-text text-white">@globalStatus</MudText>
+                    </div>
+                    @if(OngoingIncidents.Count > 0)
+                    {
+                        <MudDivider Class="mt-2 mb-4" />
+                        <MudExpansionPanels Elevation="3" Class="mt-2">
+                        @foreach (var ongoingIncident in OngoingIncidents.OrderByDescending(x => x.From))
+                        {
+                            <IncidentSummary @key="ongoingIncident.Id" StatusPageConfiguration=@StatusPageConfiguration Incident=@ongoingIncident Preview="true" />
+                        }
+                        </MudExpansionPanels>
+                    }
+
+                </MudPaper>
+            }
+        }
+        </div>
+    }
+
+    @if(StatusPageConfiguration.EnableUpcomingMaintenances)
+    {
+        <div class="mt-12">
+
+        <div class="d-flex mt-12 align-baseline mb-2">
+            <MudText Typo="Typo.h4"><b>Maintenances</b></MudText>
+            <MudText Typo="Typo.h5" Class="ml-2" Style="@($"color:{Colors.Grey.Darken2};")">Next @StatusPageConfiguration.DaysUpcomingMaintenances days</MudText>
+        </div>
+
+        @if(UpcomingMaintenances == null)
+        {
+            <MudSkeleton SkeletonType="SkeletonType.Rectangle" Animation="Animation.Wave" Height="64px" />
+        }
+        else
+        {
+            <MudPaper Elevation="3" Class="pa-4">
+
+            @if(UpcomingMaintenances.Count == 0)
+            {
+                <div class="d-flex align-center">
+                    <MudIcon Icon="@Icons.Outlined.Info" Color="Color.Info" Class="mr-2" />
+                    <MudText Typo="Typo.h6">No maintenances are scheduled for the next @StatusPageConfiguration.DaysUpcomingMaintenances days.</MudText>
+                </div>
+            }
+            else if(UpcomingMaintenances.Count == 1)
+            {
+                <IncidentSummary @key="UpcomingMaintenances[0].Id" StatusPageConfiguration=@StatusPageConfiguration Incident=@UpcomingMaintenances[0] />
+            }
+            else
+            {
+                @*<div class="d-flex align-center">
+                    <MudIcon Icon="@Icons.Outlined.Info" Color="Color.Info" Class="mr-2" />
+                    <MudText Typo="Typo.h6">There @(maintenances.Count > 1 ? "are" : "is") @maintenances.Count upcoming maintenance@(maintenances.Count > 1 ? "s" : "")</MudText>
+                </div>
+                <MudDivider Class="mt-2 mb-4" />*@
+                <MudExpansionPanels>
+                @foreach (var maintenance in UpcomingMaintenances)
+                {
+                    <IncidentSummary @key="maintenance.Id" StatusPageConfiguration=@StatusPageConfiguration Incident=@maintenance />
+                }
+                </MudExpansionPanels>
+            }
+
+            </MudPaper>
+        }
+
+        </div>
+    }
+
+    @if(StatusPageConfiguration.MonitorSummaries != null && StatusPageConfiguration.MonitorSummaries.Count > 0)
+    {
+        <div class="mt-12">
+        
+        <div class="d-flex mt-12 align-baseline mb-2">
+            <MudText Typo="Typo.h4"><b>Status</b></MudText>
+            <MudText Typo="Typo.h5" Class="ml-2" Style="@($"color:{Colors.Grey.Darken2};")">Last @StatusPageConfiguration.DaysStatusHistory days</MudText>
+        </div>
+
+        @foreach (var summary in StatusPageConfiguration.MonitorSummaries.OrderBy(x => x.OrderIndex))
+        {
+            var histories = ServiceStatusHistories != null ? 
+                summary.LabeledMonitors.SelectMany(x => ServiceStatusHistories.Where(y => y.ServiceId == x.MonitorId).ToList()).ToList() :
+                null;
+
+            <ServiceStatusSummary @key="summary.Id" Days="@StatusPageConfiguration.DaysStatusHistory" Summary=@summary ServiceHistories=@histories />
+        }
+
+        </div>
+    }
+
+    @if(StatusPageConfiguration.EnableIncidentTimeline)
+    {
+        <div class="d-flex mt-12 align-baseline mb-2">
+            <MudText Typo="Typo.h4"><b>Incidents</b></MudText>
+            <MudText Typo="Typo.h5" Class="ml-2" Style="@($"color:{Colors.Grey.Darken2};")">Last @StatusPageConfiguration.DaysIncidentTimeline days</MudText>
+        </div>
+        <MudPaper Elevation="3" Class="pa-4"> @*Style="max-height: 500px; overflow-y: scroll;"*@
+            <MudTimeline TimelinePosition="TimelinePosition.Start" DisableModifiers="false"> 
+            
+            @for(int incidentDaysBack = 0; incidentDaysBack < StatusPageConfiguration.DaysIncidentTimeline; incidentDaysBack++)
+            {
+                var dayString = GetLocalDateString(incidentDaysBack);
+
+                @if(Incidents == null) //Incident data is still loading
+                {
+                    <MudTimelineItem Variant="Variant.Filled" >
+                        <MudCard Elevation="25">
+                            <MudCardContent>
+                                <div class="d-flex flex-wrap">
+                                    <div>
+                                        <MudText Typo="Typo.h6">@dayString</MudText>
+                                    </div>
+                                    <div>
+                                        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Animation="Animation.Wave" Width="250px" Height="100%" Class="ml-2" />
+                                    </div>
+                                </div>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudTimelineItem>
+                }
+                else //We have data, now process it
+                {
+                    var incidentsForDay = GetIncidentsForDayBack(incidentDaysBack).OrderByDescending(x => x.From).ToList();
+                    var color = Color.Success;
+
+                    if (incidentsForDay.Count > 0)
+                    {
+                        var maxSeverity = incidentsForDay.SelectMany(x => x.Timeline).Max(x => x.Severity);
+
+                        color = maxSeverity switch
+                        {
+                            IncidentSeverity.Information or IncidentSeverity.Maintenance => Color.Info,
+                            IncidentSeverity.Minor => Color.Warning,
+                            IncidentSeverity.Major => Color.Error,
+                            _ => Color.Dark
+                        };
+                    }
+
+                    <MudTimelineItem Variant="Variant.Filled" Color=@color>
+                        <MudCard Elevation="25">
+                            <MudCardContent>
+                                <div class="d-flex flex-wrap">
+                                    <div>
+                                        <MudText>@dayString</MudText>
+                                    </div>
+                                    <div>
+                                        <MudText Class="ml-2"><b>@(incidentsForDay.Count > 0 ? incidentsForDay.Count.ToString() : "No")</b> Incident@(incidentsForDay.Count != 1 ? "s" : "")</MudText>
+                                    </div>
+                                </div>
+
+                                @if(incidentsForDay.Count > 0)
+                                {
+                                    <MudDivider Class="mt-2 mb-4" />
+
+                                    <MudExpansionPanels>
+                                    @foreach (var incident in incidentsForDay)
+                                    {
+                                        <IncidentSummary @key="incident.Id" Incident=@incident StatusPageConfiguration=@StatusPageConfiguration />
+                                    }
+                                    </MudExpansionPanels>
+                                }
+                            </MudCardContent>
+                        </MudCard>
+                    </MudTimelineItem>
+                }
+            }
+            </MudTimeline>
+        </MudPaper>
+    }
+
+    <div class="d-flex justify-space-between mt-1">
+        <a href="/dashboard"><MudText Typo="Typo.caption">Admin Dashboard</MudText></a>
+        <a href="https://openstatus.page"><MudText Typo="Typo.caption">Powered by <span class="mud-primary-text">Open</span>StatusPage</MudText></a>
+    </div>
+}

@@ -1,0 +1,18 @@
+﻿@inherits NotificationProvider
+
+<NotificationProvider ProviderModel=@WebhookProviderModel />
+
+<MudTextField 
+    Label="Post URL" 
+    Class="mt-4"
+    @bind-Value="WebhookProviderModel.Url" 
+    For="@(() => WebhookProviderModel.Url)"/>
+
+<MudTextField
+    Label="Headers"
+    Class="mt-4"
+    Lines="4" 
+    Placeholder=@("X-Api-Key=MyApiKey\nAnotherHeader=AnotherValue")
+    HelperText="One key=value pair per line" 
+    @bind-Value="WebhookProviderModel.Headers" 
+    For="@(() => WebhookProviderModel.Headers)"/>

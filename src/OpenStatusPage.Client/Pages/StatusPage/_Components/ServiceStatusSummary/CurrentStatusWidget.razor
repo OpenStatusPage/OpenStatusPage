@@ -1,0 +1,36 @@
+﻿@using OpenStatusPage.Shared.DataTransferObjects.Services
+@using OpenStatusPage.Shared.Enumerations
+@using OpenStatusPage.Shared.Utilities
+
+<div class="d-flex align-center">
+@switch(CurrentOutageStatus)
+{
+    case ServiceStatus.Unknown:
+    {
+        <MudText Typo="Typo.h6" Color="Color.Dark" Class="mr-2">Unknown</MudText>
+        <MudIcon Icon="@Icons.Outlined.QuestionMark" Color="Color.Dark" />
+        break;
+    }
+
+    case ServiceStatus.Available:
+    {
+        <MudText Typo="Typo.h6" Color="Color.Success" Class="mr-2">Operational</MudText>
+        <MudIcon Icon="@Icons.Outlined.Check" Color="Color.Success" />
+        break;
+    }
+
+    case ServiceStatus.Degraded:
+    {
+        <MudText Typo="Typo.h6" Color="Color.Warning" Class="mr-2">Degraded</MudText>
+        <MudIcon Icon="@Icons.Outlined.WarningAmber" Color="Color.Warning" />
+        break;
+    }
+
+    case ServiceStatus.Unavailable:
+    {
+        <MudText Typo="Typo.h6" Color="Color.Error" Class="mr-2">Unavailable</MudText>
+        <MudIcon Icon="@Icons.Outlined.ErrorOutline" Color="Color.Error" />
+        break;
+    }
+}
+</div>

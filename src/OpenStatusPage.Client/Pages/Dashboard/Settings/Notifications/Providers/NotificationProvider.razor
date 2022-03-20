@@ -1,0 +1,7 @@
+﻿<MudTextField Label="Name" @bind-Value="ProviderModel.Name" For="@(() => ProviderModel.Name)"/>
+
+<div class="d-flex flex-wrap align-center justify-space-between">
+    <MudSwitch Color="Color.Success" Label="Enabled" @bind-Checked="ProviderModel.Enabled" For="@(() => ProviderModel.Enabled)"/>
+
+    <MudSwitch Color="Color.Info" Label="Default for new monitors" @bind-Checked="ProviderModel.DefaultForNewMonitors" For="@(() => ProviderModel.DefaultForNewMonitors)"/>
+</div>

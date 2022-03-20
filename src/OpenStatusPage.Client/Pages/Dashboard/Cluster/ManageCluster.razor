@@ -1,0 +1,136 @@
+﻿@using OpenStatusPage.Client.Pages._Components
+@using OpenStatusPage.Shared.DataTransferObjects.Cluster
+@using OpenStatusPage.Shared.Enumerations
+
+@page "/dashboard/cluster"
+@layout DashboardBase
+
+<PageTitle>Cluster</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large">
+    <DataLoader WaitFor="ClusterMembers">
+
+        <div class="d-flex justify-space-between align-center flex-wrap">
+            <MudText Typo="Typo.h4">Cluster</MudText>
+
+            <div class="d-flex">
+                <div>
+                    <MudText>Last refresh @(LastRefresh.HasValue ? LastRefresh.Value.ToLocalTime().ToString("T") : "loading")</MudText>
+                    @if(RefreshInProgress)
+                    {
+                        <MudText>Refreshing ...</MudText>
+                    }
+                    else
+                    {
+                        <MudText>Autorefresh in @(RefreshSecondsRemaining.HasValue ? RefreshSecondsRemaining.Value.ToString() : "..") sec</MudText>
+                    }
+                </div>
+                <MudIconButton Title="Refresh now" Disabled=@RefreshInProgress Class="ml-2 px-2" Icon="@Icons.Outlined.Refresh" Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Large" OnClick="TriggerRefreshAsync" />
+            </div>
+        </div>
+
+        @if(ClusterMembers.Count < 3)
+        {
+            <MudAlert Class="mt-4" Elevation="3" Severity="Severity.Warning">
+                Currently you only have <b>@ClusterMembers.Count</b> member@(ClusterMembers.Count > 1 ? "s" : "") in your cluster.
+                You need <b>at least @(ClusterMembers.Count > 2 ? "one" : $"{3 - ClusterMembers.Count}")</b> more to ensure redundancy.
+            </MudAlert>
+        }
+        else if(ClusterMembers.All(x => x.Availability == ClusterMemberAvailability.Available))
+        {
+            var canFail = CountUntilDataLoss();
+
+            <MudAlert Class="mt-4" Elevation="3" Severity="Severity.Success">The cluster is fully operational and can tolerate up to <b>@(canFail > 1 ? canFail : "one")</b> member@(canFail > 1 ? "s" : "") failing.</MudAlert>
+        }
+        else
+        {
+            var notAvailable = ClusterMembers.Where(x => x.Availability != ClusterMemberAvailability.Available).Count();
+            var canLose = CountUntilDataLoss();
+
+            if(canLose >= 0)
+            {
+                <MudAlert Class="mt-4" Elevation="3" Severity="Severity.Warning">
+                    <b>@notAvailable member@(notAvailable > 1 ? "s" : "")</b> of the cluster @(notAvailable > 1 ? "are" : "is") not available. 
+                    
+                    @if(canLose > 0)
+                    {
+                        <span>Only <b>@(canLose > 1 ? canLose : "one")</b> more member failure@(canLose > 1 ? "s" : "") can be tolerated before the cluster becomes unoperational and potentially loses data.</span>
+                    }
+                    else
+                    {
+                        <strong>Further member failures will leave the cluster in an unoperational state and may result in data loss.</strong>
+                    }
+                </MudAlert>
+            }
+            else
+            {
+                <MudAlert Class="mt-4" Elevation="3" Severity="Severity.Error">A <b>majority</b> of cluster members is not available. Cluster is unoperational. Data might have been lost.</MudAlert>
+            }
+        }
+
+        <MudTable Class="mt-4" Elevation="3" Items="ClusterMembers" Dense="true" Hover="true" Filter="new Func<ClusterMemberDto,bool>(FilterFunc)">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Manage Members</MudText>
+                <MudSpacer />
+                <MudTextField Immediate="true" @bind-Value="_searchString" Placeholder="Search for member properties like endpoints or tags" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"/>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh><MudTableSortLabel SortBy="new Func<ClusterMemberDto,object>(x => x.Endpoint.ToString())">Endpoint</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<ClusterMemberDto,object>(x => x.Availability)">Status</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<ClusterMemberDto,object>(x => (x.Availability == ClusterMemberAvailability.Available ? x.AvgCpuLoad : null) ?? 0L)">Avg. CPU load</MudTableSortLabel></MudTh>
+                <MudTh>Tags</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Endpoint" Style="white-space: nowrap">
+                    <MudChip Label="true" Text="@context.Endpoint.ToString()"/>
+                </MudTd>
+                <MudTd DataLabel="Status" Style="white-space: nowrap">
+                @switch(context.Availability)
+                {
+                    case ClusterMemberAvailability.Available:
+                    {
+                        <MudChip Label="true" Text="Online" Color="Color.Success"/>
+                        break;
+                    }
+
+                    case ClusterMemberAvailability.Unavailable:
+                    {
+                        <MudChip Label="true" Text="Offline" Color="Color.Error"/>
+                        break;
+                    }
+
+                    default:
+                    {
+                        <MudChip Label="true" Text="Unknown"/>
+                        break;
+                    }
+                }
+                @if(context.IsLeader)
+                {
+                    <MudChip Label="true" Text="Leader" Color="Color.Info"/>
+                }
+                </MudTd>
+                <MudTd DataLabel="Load" Style="white-space: nowrap">
+                    <MudChip Label="true" Text="@((context.AvgCpuLoad.HasValue && context.Availability == ClusterMemberAvailability.Available) ? $"{context.AvgCpuLoad.Value:0.00}%" : "Unknown")"/>
+                </MudTd>
+                <MudTd DataLabel="Tags">
+                    @foreach (var tag in context.Tags)
+                    {
+                        <MudChip Text="@tag"/>
+                    }
+                    <MudSpacer />
+                </MudTd>
+                <MudTd Style="text-align:right; white-space: nowrap">
+                    @if(ClusterMembers.Count > 1)
+                    {
+                        <AsyncButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Outlined.PowerOff" Color="Color.Error" AsyncAction="() => RemoveClusterMemberAsync(context)" RunningText="Removing ...">Remove from cluster</AsyncButton>
+                    }
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    </DataLoader>
+</MudContainer>

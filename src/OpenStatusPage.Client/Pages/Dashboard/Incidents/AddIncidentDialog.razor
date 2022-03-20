@@ -1,0 +1,22 @@
+﻿@using OpenStatusPage.Shared.Enumerations
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="Name" Label="Title" Placeholder="Name" Required="true" RequiredError="This field is required."/>
+        <MudSelect 
+            @bind-Value="Severity" 
+            Class="mt-4" 
+            T="IncidentSeverity" 
+            Label="Incident Severity" 
+            AnchorOrigin="Origin.TopCenter" 
+            TransformOrigin="Origin.BottomCenter">
+            @foreach (IncidentSeverity item in Enum.GetValues(typeof(IncidentSeverity)))
+            {
+                <MudSelectItem Value="@item">@item</MudSelectItem>
+            }
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton FullWidth="true" Variant="Variant.Filled" Color="Color.Success" Class="mx-4 mt-8" OnClick="AddIncidentAsync">Add</MudButton>
+    </DialogActions>
+</MudDialog>

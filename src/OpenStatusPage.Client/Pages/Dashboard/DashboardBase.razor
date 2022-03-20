@@ -1,0 +1,83 @@
+﻿@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using MudBlazor.Services
+@using OpenStatusPage.Client.Pages.Dashboard._Components
+@using OpenStatusPage.Client.Pages._Components
+@inherits LayoutComponentBase
+@layout MainLayout
+
+<AuthorizeView Roles="@AccessRoles" Context="Auth">
+    <Authorized>
+        <MudLayout>
+            <MudAppBar Elevation="1">
+                <MudHidden Breakpoint="Breakpoint.LgAndUp">
+                    <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+                </MudHidden>
+                <MudText Typo="Typo.h5" Class="ml-3"><span class="mud-primary-text">Open</span>StatusPage</MudText>
+                <MudHidden Breakpoint="Breakpoint.MdAndDown">
+                    <MudSpacer />
+                    <DashboardNavMenuItems />
+                </MudHidden>
+            </MudAppBar>
+
+            <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Docked" Elevation="2">
+                <MudHidden Breakpoint="Breakpoint.MdAndUp">
+                    <MudDrawerHeader>
+                        <MudText Typo="Typo.h5"><span class="mud-primary-text">Open</span>StatusPage</MudText>
+                    </MudDrawerHeader>
+                </MudHidden>
+                <MudDrawerContainer>
+                    <MudNavMenu>
+                        <DashboardNavMenuItems />
+                    </MudNavMenu>
+                </MudDrawerContainer>
+            </MudDrawer>
+
+            <MudMainContent>
+                <CascadingValue Value="@DashboardApiKeyHeader">
+                    <MudContainer MaxWidth="MaxWidth.Large" Class="py-16">
+                        @Body
+                    </MudContainer>
+                </CascadingValue>
+            </MudMainContent>
+        </MudLayout>
+    </Authorized>
+
+    <Authorizing>
+        <CenterLoader />
+    </Authorizing>
+
+    <NotAuthorized>
+        @if (_showSpinner)
+        {
+            <CenterLoader />
+        }
+        else
+        {
+            <MudContainer MaxWidth="MaxWidth.Small" Class="mt-8">
+                <EditForm Model="@LoginViewModel" OnValidSubmit="SubmitLoginFormAsync">
+                    <DataAnnotationsValidator/>
+                    <MudCard Elevation="3">
+                        <MudCardHeader>
+                            <MudText Typo="Typo.h5"><span class="mud-primary-text">Open</span>StatusPage</MudText>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudTextField Label="Connection URL" HelperText="Must be a valid url e.g. https://osp.example.org"
+                                            @bind-Value="LoginViewModel.Endpoint" For="@(() => LoginViewModel.Endpoint)"/>
+                            <MudTextField Label="API Key" HelperText="API key used for communcation e.g. 9a3dcef7-e0bc-4e30-98bc-b325f5866490" Class="mt-3"
+                                            @bind-Value="LoginViewModel.ApiKey" For="@(() => LoginViewModel.ApiKey)" InputType="InputType.Password"/>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Login</MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </EditForm>
+
+                <div class="d-flex justify-end mt-1">
+                    <a href="https://openstatus.page"><MudText Typo="Typo.caption">Powered by <span class="mud-primary-text">Open</span>StatusPage</MudText></a>
+                </div>
+
+            </MudContainer>
+        }
+    </NotAuthorized>
+</AuthorizeView>

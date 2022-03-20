@@ -1,0 +1,266 @@
+﻿@using OpenStatusPage.Client.Pages._Components
+@using OpenStatusPage.Shared.DataTransferObjects.Monitors
+
+@page "/dashboard/statuspages"
+@layout DashboardBase
+
+<PageTitle>Status pages</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large">
+    <MudText Typo="Typo.h4" Class="mb-2">Status pages</MudText>
+    <DataLoader WaitFor="StatusPageMetaData">
+            <MudPaper Elevation="3" Class="pa-4">
+                <MudGrid>
+                    <MudItem xs=12 md="4" Class="align-self-stretch">
+                        <MudPaper Elevation="1" Class="pa-4 mud-height-full">
+
+                            <MudGrid>
+                                <MudItem xs=12 md="2" Class="d-flex align-center">
+                                    <MudHidden Breakpoint="Breakpoint.SmAndDown">
+                                        <MudIconButton Class="pa-2" Icon="@Icons.Outlined.Add" Color="@Color.Success" Variant="Variant.Outlined" OnClick="OpenAddMonitorAsync" />
+                                    </MudHidden>
+                                    <MudHidden Breakpoint="Breakpoint.MdAndUp">
+                                        <MudButton FullWidth="true" StartIcon="@Icons.Outlined.Add" Color="@Color.Success" Variant="Variant.Outlined" OnClick="OpenAddMonitorAsync">
+                                            Add Monitor
+                                        </MudButton>
+                                    </MudHidden>
+
+                                </MudItem>
+                                <MudItem xs=12 md="10">
+                                    <MudTextField 
+                                        @bind-Value="@SearchTerm" 
+                                        Placeholder="Status page name" 
+                                        Adornment="Adornment.End" 
+                                        AdornmentIcon="@Icons.Filled.Search"
+                                        Clearable="true"
+                                        Variant="Variant.Outlined" 
+                                        Margin="Margin.Dense"
+                                        Immediate="true"/>
+                                </MudItem>
+                            </MudGrid>
+
+                            @if(StatusPageMetaData.Count == 0)
+                            {
+                                <MudText Class="d-flex justify-center mt-4">
+                                    Add a status page to continue
+                                </MudText>
+                            }
+                            <MudList Clickable="true" SelectedValue="@SelectedStatusPage" SelectedValueChanged="(value) => OnItemSelectedAsync(value)" >
+                            @foreach (var monitor in StatusPageMetaData.OrderBy(x => x.Name))
+                            {
+                                if (!string.IsNullOrWhiteSpace(SearchTerm) && !monitor.Name.Contains(SearchTerm, StringComparison.InvariantCultureIgnoreCase)) continue;
+
+                                <MudListItem @key="@monitor.Id" Value="monitor">
+                                    <MudHighlighter Class="mud-primary-text"
+                                         Style="background-color:transparent;font-weight:bold"
+                                         Text="@monitor.Name"
+                                         HighlightedText="@SearchTerm" />
+                                </MudListItem>
+                            }
+                            </MudList>
+
+                        </MudPaper>
+                    </MudItem>
+
+                    <MudItem xs=12 md="8" Class="align-self-stretch">
+                        <MudPaper Elevation="1" Class="pa-4 mud-height-full">
+                            <MudForm @ref="EditForm" Model="@StatusPageModel" SuppressImplicitSubmission="true">
+                            @if(SelectedStatusPage != null)
+                            {
+                                <div class="d-flex justify-space-between align-center flex-wrap">
+                                    <MudText Typo="Typo.h5">General Settings</MudText>
+                                    <a href="@SelectedStatusPage.Name" target="_blank"><MudButton EndIcon="@Icons.Outlined.Tab">View status page</MudButton></a>
+                                </div>
+                                
+                                <MudTextField 
+                                    Label="Name*" 
+                                    Class="mt-4"
+                                    @bind-Value="StatusPageModel.Name" 
+                                    Validation="@Validator.ValidateValue"
+                                    For="@(() => StatusPageModel.Name)"/>
+
+                                <MudTextField 
+                                    Label="Password" 
+                                    Class="mt-4"
+                                    @bind-Value="StatusPageModel.Password" 
+                                    For="@(() => StatusPageModel.Password)"
+                                    Validation="@Validator.ValidateValue"
+                                    InputType="@_passwordInput"
+                                    Adornment="Adornment.End" 
+                                    AdornmentIcon="@_passwordInputIcon" 
+                                    OnAdornmentClick="PasswordToggleShowAsync"/>
+
+                                <MudTextField 
+                                    Label="Description" 
+                                    Lines="5"
+                                    Placeholder="Optional description supporting markdown"
+                                    Class="mt-4"
+                                    @bind-Value="StatusPageModel.Description" 
+                                    For="@(() => StatusPageModel.Description)"
+                                    Validation="@Validator.ValidateValue" />
+                                
+                                <div class="mt-4">
+                                    <MudSwitch 
+                                        Label="Show global summary"
+                                        Color="Color.Success" 
+                                        @bind-Checked="StatusPageModel.EnableGlobalSummary" 
+                                        For="@(() => StatusPageModel.EnableGlobalSummary)"
+                                        Validation="@Validator.ValidateValue" />
+                                </div>
+
+                                <div class="mt-4">
+                                    <MudSwitch 
+                                        Label="Show upcoming maintenances"
+                                        Color="Color.Success" 
+                                        @bind-Checked="StatusPageModel.EnableUpcomingMaintenances" 
+                                        For="@(() => StatusPageModel.EnableUpcomingMaintenances)"
+                                        Validation="@Validator.ValidateValue" />
+                                </div>
+
+                                @if(StatusPageModel.EnableUpcomingMaintenances)
+                                {
+                                <MudNumericField
+                                    Label="How many days to preview maintenances*"
+                                    Class="mt-4"
+                                    @bind-Value="StatusPageModel.DaysUpcomingMaintenances" 
+                                    For="@(() => StatusPageModel.DaysUpcomingMaintenances)"
+                                    Validation="@Validator.ValidateValue" />
+                                }
+                                
+                                <div class="mt-4">
+                                    <MudSwitch 
+                                        Label="Show incident history timeline" 
+                                        Color="Color.Success" 
+                                        @bind-Checked="StatusPageModel.EnableIncidentTimeline" 
+                                        For="@(() => StatusPageModel.EnableIncidentTimeline)"
+                                        Validation="@Validator.ValidateValue" />
+                                </div>
+
+                                @if(StatusPageModel.EnableIncidentTimeline)
+                                {
+                                <MudNumericField
+                                    Label="How many days to show in the incident timeline*"
+                                    Class="mt-4"
+                                    @bind-Value="StatusPageModel.DaysIncidentTimeline" 
+                                    For="@(() => StatusPageModel.DaysIncidentTimeline)"
+                                    Validation="@Validator.ValidateValue" />
+                                }
+
+                                <MudNumericField
+                                    Label="How many days to include in the monitor history*"
+                                    Class="mt-4"
+                                    @bind-Value="StatusPageModel.DaysStatusHistory" 
+                                    For="@(() => StatusPageModel.DaysStatusHistory)"
+                                    Validation="@Validator.ValidateValue" />
+
+                                <MudText Typo="Typo.h5" Class="mt-8">Monitors</MudText>
+
+                                @foreach (var summary in StatusPageModel.MonitorSummaries.OrderBy(x => x.OrderIndex))
+                                {
+                                <MudPaper Elevation="1" Class="pa-4 mt-4">
+                                    <MudGrid Spacing="0" Class="align-center justify-space-between">
+                                        <MudItem xs="12">
+                                            <div class="d-flex align-center flex-grow-1">
+                                                <div class="d-flex flex-column mr-2">
+                                                    <MudIconButton Class="pa-0" Icon="@Icons.Filled.KeyboardArrowUp" OnClick="() => MoveGroupUp(summary)" />
+                                                    <MudIconButton Class="pa-0" Icon="@Icons.Filled.KeyboardArrowDown" OnClick="() => MoveGroupDown(summary)" />
+                                                </div>
+                                            
+                                                <MudTextField 
+                                                    Label="Group name" 
+                                                    Placeholder="Name of the monitor group"
+                                                    @bind-Value="summary.Title" 
+                                                    For="@(() => summary.Title)"
+                                                    Required="true" 
+                                                    FullWidth="true"
+                                                    RequiredError="This field is required" />
+
+                                                <MudIconButton Icon="@Icons.Outlined.Close" Class="pa-0 ml-2" OnClick="() => RemoveGroup(summary)" />
+                                            </div>
+                                         </MudItem>
+
+                                        <MudItem xs="12" Class="mt-4">
+                                            <MudSwitch 
+                                                Label="Show history"
+                                                Color="Color.Success" 
+                                                @bind-Checked="summary.ShowHistory" 
+                                                For="@(() => summary.ShowHistory)" />
+                                        </MudItem>
+
+                                        <MudItem xs="12" Class="mt-2">
+                                        @foreach (var monitor in summary.LabeledMonitors.OrderBy(x => x.OrderIndex))
+                                        {
+                                            <MudPaper Elevation="1" Class="py-2 px-4 mt-2 d-flex align-center justify-space-between">
+                                                <div class="d-flex align-center flex-grow-1">
+                                                    <div class="d-flex flex-column mr-2">
+                                                        <MudIconButton Class="pa-0" Icon="@Icons.Filled.KeyboardArrowUp" OnClick="() => MoveMonitorUp(monitor, summary)" />
+                                                        <MudIconButton Class="pa-0" Icon="@Icons.Filled.KeyboardArrowDown" OnClick="() => MoveMonitorDown(monitor, summary)" />
+                                                    </div>
+                                                    
+                                                    <MudText Style="white-space: nowrap">@GetMonitorName(monitor)</MudText>
+                                                    <MudChip Label="true">@MetaToTypeString(monitor)</MudChip>
+                                                
+                                                    <MudTextField 
+                                                        Label="Display name" 
+                                                        Placeholder="Name on the status page"
+                                                        Class="mr-1" 
+                                                        Variant="Variant.Outlined" 
+                                                        Margin="Margin.Dense" 
+                                                        @bind-Value="monitor.Label" 
+                                                        For="@(() => monitor.Label)"
+                                                        Required="true" 
+                                                        RequiredError="This field is required" />
+
+                                                    <MudIconButton Icon="@Icons.Outlined.Close" Class="pa-0 ml-2" OnClick="() => RemoveMonitorFromGroup(monitor, summary)" />
+                                                </div>
+                                            </MudPaper>
+                                        }
+                                            <MudPaper Elevation="1" Class="py-2 px-4 mt-2">
+                                                <MudAutocomplete 
+                                                    Style="margin-top: -16px"
+                                                    T="MonitorMetaDto" 
+                                                    SearchFunc="(value) => SearchMonitorAsync(value, summary)"
+                                                    ResetValueOnEmptyText="true"
+                                                    CoerceText="true"
+                                                    Placeholder="Add a monitor to the group ..."
+                                                    Value="null"
+                                                    ValueChanged="(value) => AddMonitorToGroup(value, summary)">
+                                                    <ItemTemplate Context="e">                          
+                                                        <div class="d-flex align-center">
+                                                            <MudText Style="white-space: nowrap">@e.Name</MudText>
+                                                            <MudChip Label="true">@MetaToTypeString(e)</MudChip>
+                                                        </div>
+                                                    </ItemTemplate>
+                                                </MudAutocomplete>
+                                            </MudPaper>
+                                        </MudItem>
+                                    </MudGrid>
+                                </MudPaper>
+                                }
+
+                                <MudPaper Elevation="1" Class="py-2 px-4 mt-2">
+                                    <MudButton FullWidth="true" StartIcon="@Icons.Outlined.Add" OnClick="AddGroup">Add a group</MudButton>
+                                </MudPaper>
+
+                                <div class="d-flex mt-4">
+                                    <AsyncButton StartIcon="@Icons.Outlined.DeleteForever" FullWidth="true" Variant="Variant.Outlined" Color="Color.Error" AsyncAction="RemoveStatusPageAsync" RunningText="Deleting">
+                                        Delete
+                                    </AsyncButton>
+                                    <AsyncButton Class="ml-4" StartIcon="@Icons.Outlined.Save" FullWidth="true" Variant="Variant.Filled" Color="Color.Primary" AsyncAction="SubmitChangeAsync" RunningText="Saving">
+                                        Save
+                                    </AsyncButton>
+                                </div>
+                            }
+                            else
+                            {
+                                <MudText Class="d-flex justify-center">
+                                    Please select a status page from the list to configure it.
+                                </MudText>
+                            }
+                            </MudForm>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+    </DataLoader>
+</MudContainer>

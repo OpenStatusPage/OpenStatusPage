@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <title>OpenStatusPage</title>
+        <base href="/" />
+        <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+        <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+        <link href="OpenStatusPage.Client.styles.css" rel="stylesheet" />
+        <link rel="stylesheet" href="css/site.css" />
+        
+        <link href="manifest.json" rel="manifest" />
+
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    </head>
+
+    <body>
+        
+        <style>
+            .center-logo {
+                text-align: center;
+                color: #424242ff;
+                box-sizing: border-box;
+                padding: 0;
+                -webkit-font-smoothing: antialiased;
+                margin: 0;
+                font-size: 4rem;
+                font-family: 'Roboto','Helvetica','Arial','sans-serif';
+                font-weight: 400;
+                line-height: 1.334;
+                letter-spacing: 0;
+                text-transform: none;
+            }
+        </style>
+        
+        <div id="app">
+            <!--<div style="height: 100vh; width: 100%; display: flex; justify-content: center; align-items: center;">-->
+            <div style="margin-top: 64px;">
+                <h1 class="center-logo"><span style="color: #594ae2ff">Open</span>StatusPage</h1>
+                <center><img src="img/rolling-1s-200px.svg" /></center>
+            </div>
+        </div>
+
+        <div id="blazor-error-ui">
+            An unhandled error has occurred.
+            <a href="" class="reload">Reload</a>
+            <a class="dismiss">🗙</a>
+        </div>
+        <script src="_framework/blazor.webassembly.js"></script>
+        <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+        <script>navigator.serviceWorker.register('service-worker.js');</script>
+    </body>
+
+</html>

@@ -1,0 +1,16 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="SelectedName" Label="Name" Placeholder="An alias name to quickly find this monitor" Required="true" RequiredError="This field is required" />
+        <MudSelect Class="mt-4" T="string" @bind-Value="SelectedValue" Label="Select the type of monitor you want to add" AnchorOrigin="Origin.TopCenter" TransformOrigin="Origin.BottomCenter">
+            <MudSelectItem Value="@("HTTP")" />
+            <MudSelectItem Value="@("PING")" />
+            <MudSelectItem Value="@("TCP")" />
+            <MudSelectItem Value="@("UDP")" />
+            <MudSelectItem Value="@("DNS")" />
+            <MudSelectItem Value="@("SSH")" />
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton FullWidth="true" Variant="Variant.Filled" Color="Color.Success" Class="mx-4 mt-8" OnClick="AddProviderAsync">Add</MudButton>
+    </DialogActions>
+</MudDialog>

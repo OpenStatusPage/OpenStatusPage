@@ -1,0 +1,103 @@
+﻿@using OpenStatusPage.Client.Pages.Dashboard.Settings.Notifications.Providers
+@using OpenStatusPage.Client.Pages._Components
+@using OpenStatusPage.Shared.DataTransferObjects.NotificationProviders
+
+<DataLoader WaitFor="ProviderMetadata">
+    <MudGrid>
+        <MudItem xs=12 md="5" Class="align-self-stretch">
+            <MudPaper Elevation="1" Class="pa-4 mud-height-full">
+
+                <MudGrid>
+                    <MudItem xs=12 md="2" Class="d-flex align-center">
+                        <MudHidden Breakpoint="Breakpoint.SmAndDown">
+                            <MudIconButton Class="pa-2" Icon="@Icons.Outlined.Add" Color="@Color.Success" Variant="Variant.Outlined" OnClick="OpenAddProviderAsync" />
+                        </MudHidden>
+                        <MudHidden Breakpoint="Breakpoint.MdAndUp">
+                            <MudButton FullWidth="true" StartIcon="@Icons.Outlined.Add" Color="@Color.Success" Variant="Variant.Outlined" OnClick="OpenAddProviderAsync">
+                                Add Provider
+                            </MudButton>
+                        </MudHidden>
+
+                    </MudItem>
+                    <MudItem xs=12 md="10">
+                        <MudTextField 
+                            @bind-Value="@SearchTerm" 
+                            Placeholder="Provider name" 
+                            Adornment="Adornment.End" 
+                            AdornmentIcon="@Icons.Filled.Search"
+                            Clearable="true"
+                            Variant="Variant.Outlined" 
+                            Margin="Margin.Dense"
+                            Immediate="true"/>
+                    </MudItem>
+                </MudGrid>
+
+                @if(ProviderMetadata.Count == 0)
+                {
+                    <MudText Class="d-flex justify-center mt-4">
+                        Add a provider to continue
+                    </MudText>
+                }
+                <MudList Clickable="true" SelectedValue="SelectedProvider" SelectedValueChanged="(value) => OnProviderSelectedAsync(value)" >
+                @foreach (var provider in ProviderMetadata.OrderBy(x => x.Name))
+                {
+                    if (!string.IsNullOrWhiteSpace(SearchTerm) && !provider.Name.Contains(SearchTerm, StringComparison.InvariantCultureIgnoreCase)) continue;
+
+                    <MudListItem @key="@provider.Id" Value="provider">
+                        <MudHighlighter Class="mud-primary-text"
+                             Style="background-color:transparent;font-weight:bold"
+                             Text="@provider.Name"
+                             HighlightedText="@SearchTerm" />
+                    </MudListItem>
+                }
+                </MudList>
+
+            </MudPaper>
+        </MudItem>
+        <MudItem xs=12 md="7" Class="align-self-stretch">
+            <MudPaper Elevation="1" Class="pa-4 mud-height-full">
+                <MudForm @ref="EditForm" SuppressImplicitSubmission="true">
+                @{
+                    switch(SelectedProvider?.Type.ToLowerInvariant())
+                    {
+                        case "webhookprovider":
+                        {
+                            <MudText Typo="Typo.h5" Class="mb-4">Webhook</MudText>
+                            <WebhookProvider WebhookProviderModel=@(ProviderModel as WebhookProvider.WebhookProviderViewModel) />
+                            break;
+                        }
+
+                        case "smtpemailprovider":
+                        {
+                            <MudText Typo="Typo.h5" Class="mb-4">SMTP Email</MudText>
+                            <SmtpEmailProvider SmtpEmailProviderModel=@(ProviderModel as SmtpEmailProvider.SmtpEmailProviderViewModel) />
+                            break;
+                        }
+
+                        default:
+                        {
+                            <MudText Class="d-flex justify-center">
+                                Please select a provider from the list to configure it.
+                            </MudText>
+                            break;
+                        }
+                    }
+                }
+
+                @if(SelectedProvider != null)
+                {
+                    <div class="d-flex mt-4">
+                        <AsyncButton StartIcon="@Icons.Outlined.DeleteForever" FullWidth="true" Variant="Variant.Outlined" Color="Color.Error" AsyncAction="RemoveProviderAsync" RunningText="Deleting">
+                            Delete
+                        </AsyncButton>
+                        <AsyncButton Class="ml-4" StartIcon="@Icons.Outlined.Save" FullWidth="true" Variant="Variant.Filled" Color="Color.Primary" AsyncAction="SubmitChangeAsync" RunningText="Saving">
+                            Save
+                        </AsyncButton>
+                    </div>
+                }
+
+                </MudForm>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</DataLoader>
