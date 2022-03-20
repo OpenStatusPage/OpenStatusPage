@@ -3,7 +3,7 @@ An open source, self hosted status page and monitoring system with options for r
 
 # Quickstart
 Either run the `docker` command below direclty or use `docker-compose` to set up a container.  
-Then browse to [http://localhost:8181](http://localhost:8181) and you should see the default status page after a moment.  
+Then navigate to [http://localhost:8181](http://localhost:8181) and you should see the default status page after a moment.  
 You can log into the dashboard by clicking the link on the bottom left of the page or by going here [http://localhost:8181/dashboard](http://localhost:8181/dashboard)
 
 Docker
