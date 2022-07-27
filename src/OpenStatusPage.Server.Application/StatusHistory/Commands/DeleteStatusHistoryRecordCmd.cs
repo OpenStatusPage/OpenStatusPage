@@ -2,11 +2,9 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using OpenStatusPage.Server.Application.Cluster.Communication;
-using OpenStatusPage.Server.Application.Misc.Attributes;
 
 namespace OpenStatusPage.Server.Application.StatusHistory.Commands
 {
-    [RequiresDbTransaction]
     public class DeleteStatusHistoryRecordCmd : MessageBase
     {
         public string MonitorId { get; set; }

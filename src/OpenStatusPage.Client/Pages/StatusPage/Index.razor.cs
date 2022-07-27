@@ -261,15 +261,11 @@ namespace OpenStatusPage.Client.Pages.StatusPage
                     x.Until.Value >= dayUtc.Date    //Our current day is not past the end date of the incident
                 ))
                 .ToList();
-
-            //Todo this function wold be great for a unit test!
         }
 
         protected static string GetLocalDateString(int daysBack)
         {
             return DateTimeOffset.Now.Date.AddDays(-daysBack).ToLocalTime().ToString("d", CultureInfo.CurrentUICulture);
-
-            //Todo this function wold be great for a unit test!
         }
 
         protected string GetDescriptionMarkUpString()

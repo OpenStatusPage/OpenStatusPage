@@ -2,11 +2,9 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using OpenStatusPage.Server.Application.Cluster.Communication;
-using OpenStatusPage.Server.Application.Misc.Attributes;
 
 namespace OpenStatusPage.Server.Application.Notifications.Providers.Commands
 {
-    [RequiresDbTransaction]
     public class DeleteNotificationProviderCmd : MessageBase
     {
         public string ProviderId { get; set; }

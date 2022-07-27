@@ -81,12 +81,12 @@ namespace OpenStatusPage.Server.Application.Cluster
             _raftService = raftService;
             _scopedMediator = scopedMediator;
             _environmentSettings = environmentSettings;
-            _raftService.OnStop += async (sender, args) => await OnRaftStopAsync();
+            _raftService.OnStop += async (sender, args) => await RaftOnStopAsync();
             _raftService.OnMemberJoined += async (sender, clusterMember) => await RaftOnMemberJoinedAsync(sender, clusterMember);
             _raftService.OnMemberLeft += async (sender, clusterMember) => await RaftOnMemberLeftAsync(sender, clusterMember);
             _raftService.OnLeaderChanged += async (sender, clusterMember) => await RaftOnLeaderChangedAsync(sender, clusterMember);
             _raftService.OnReplicatedMessage += (sender, message) => RaftOnReplicatedMessage(sender, message);
-            _raftService.OnReplicationCompleted += (sender, args) => OnReplication();
+            _raftService.OnMessageQueueCleared += (sender, args) => RaftOnMessageQueueCleared();
         }
 
         public static IServiceCollection ConfigureServices(IServiceCollection services, IConfiguration configuration)
@@ -104,6 +104,8 @@ namespace OpenStatusPage.Server.Application.Cluster
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             IsRunning = true;
+
+            _logger.LogInformation($"Starting cluster service with local Member(ID:{_environmentSettings.Id} | {_environmentSettings.PublicEndpoint}) and group tags [{(_environmentSettings.Tags.Count > 0 ? string.Join("|", _environmentSettings.Tags) : "none")}] ...");
         }
 
         protected async Task JoinLoopAsync()
@@ -194,7 +196,7 @@ namespace OpenStatusPage.Server.Application.Cluster
             await GracefulShutdownAsync(cancellationToken);
         }
 
-        protected async Task OnRaftStopAsync()
+        protected async Task RaftOnStopAsync()
         {
             await GracefulShutdownAsync();
         }
@@ -395,7 +397,12 @@ namespace OpenStatusPage.Server.Application.Cluster
                 OnClusterLeaderChanged?.Invoke(this, new(null!));
 
                 //Switch to non operational mode
-                IsOperational = false;
+                if (IsOperational)
+                {
+                    IsOperational = false;
+
+                    _logger.LogError($"Cluster is no longer operational.");
+                }
 
                 return;
             }
@@ -405,7 +412,12 @@ namespace OpenStatusPage.Server.Application.Cluster
                 OnClusterLeaderChanged?.Invoke(this, new(null!));
 
                 //Switch to non operational mode
-                IsOperational = false;
+                if (IsOperational)
+                {
+                    IsOperational = false;
+
+                    _logger.LogError($"Cluster is no longer operational.");
+                }
 
                 return; //No valid endpoint for non null member
             }
@@ -431,16 +443,22 @@ namespace OpenStatusPage.Server.Application.Cluster
             //Broadcast new leader
             OnClusterLeaderChanged?.Invoke(this, new(newLeader));
 
-            //Trigger the init process for cluster leaders from cold start
-            if (newLeader.IsLocal && !InitializedDispatched)
+            //Due to dotNext implementation replication is not called on leader, so we need to invoke the events around it manually
+            if (newLeader.IsLocal)
             {
-                OnReplication();
-            }
-            else if (!IsOperational)
-            {
-                //Member is now operational and can process api requests
-                IsOperational = true;
-                OnOperational?.Invoke(this, default!);
+                _ = Task.Run(() =>
+                {
+                    //If the cluster is created with just one node (cold start) we need to run code for inital setups like db defaults.
+                    if (Members.Count == 1 && !InitializedDispatched)
+                    {
+                        InitializedDispatched = true;
+
+                        OnInitialized?.Invoke(this, default!);
+                    }
+
+                    //Complete replication "with ourself"
+                    RaftOnMessageQueueCleared();
+                });
             }
         }
 
@@ -465,7 +483,7 @@ namespace OpenStatusPage.Server.Application.Cluster
             //Availability did not really change.
             if (oldAvailability == member.Availability) return;
 
-            _logger.LogDebug($"Availability changed for {member.Endpoint} from {oldAvailability} to {member.Availability}.");
+            _logger.LogDebug($"Availability changed for Member(ID:{member.Id ?? "Unknown"} | {member.Endpoint}) from {oldAvailability} to {member.Availability}.");
 
             //If the member has become available re-fetch his info in case it changed.
             if (member.Availability == ClusterMemberAvailability.Available)
@@ -520,26 +538,16 @@ namespace OpenStatusPage.Server.Application.Cluster
             OnReplicatedMessage?.Invoke(this, message);
         }
 
-        protected void OnReplication()
+        protected void RaftOnMessageQueueCleared()
         {
-            //Start the OnInitialized event dispatch process just once!
-            if (!InitializedDispatched && HasLeader())
+            if (!IsOperational && HasLeader())
             {
-                InitializedDispatched = true;
+                //Member is now operational and can process api requests
+                IsOperational = true;
 
-                _ = Task.Run(() =>
-                {
-                    OnInitialized?.Invoke(this, default!);
+                _logger.LogInformation($"Cluster is now operational.");
 
-                    if (!IsOperational)
-                    {
-                        //Only after all blocking events for cluster init are handled, the operational status is turned on
-                        //This gives additional application logic the chance to perform a critical blocking operation with all the cluster data before any requests could arrive
-                        IsOperational = true;
-
-                        OnOperational?.Invoke(this, default!);
-                    }
-                });
+                OnOperational?.Invoke(this, default!);
             }
         }
 

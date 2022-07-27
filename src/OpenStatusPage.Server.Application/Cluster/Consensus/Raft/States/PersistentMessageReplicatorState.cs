@@ -2,7 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OpenStatusPage.Server.Application.Cluster.Consensus.Raft.LogEntries;
-using OpenStatusPage.Server.Application.Misc.Exceptions;
+using System.Collections.Concurrent;
 
 namespace OpenStatusPage.Server.Application.Cluster.Consensus.Raft.States
 {
@@ -11,9 +11,12 @@ namespace OpenStatusPage.Server.Application.Cluster.Consensus.Raft.States
         private readonly ILogger<PersistentMessageReplicatorState> _logger;
         private readonly IServiceProvider _serviceProvider;
 
-        protected Dictionary<long, Task<bool>> MessageDeliveryTasks { get; set; } = new();
+        protected ConcurrentQueue<(ReplicatedMessage Message, long Index)> _incomingMessages = new();
+        protected Task _incomingMessagesHandler;
 
         public event EventHandler<ReplicatedMessage> OnMessageReceived;
+
+        public event EventHandler OnMessageQueueCleared;
 
         public PersistentMessageReplicatorState(IServiceProvider serviceProvider) : base(serviceProvider)
         {
@@ -61,9 +64,28 @@ namespace OpenStatusPage.Server.Application.Cluster.Consensus.Raft.States
             //As leader send out the message eventhandler on append. If this throws the replication will not take place to followers and the error can be handled by the caller.
             if ((IsLeader || entry.IsSnapshot) && entry is ReplicatedMessage replicatedMessage)
             {
-                _logger.LogDebug($"AppendEntryAsync(IsLeader:{IsLeader}) -> Delivering replicated Message {replicatedMessage.Message.GetType().Name}...");
+                if (IsLeader)
+                {
+                    try
+                    {
+                        _logger.LogDebug($"AppendEntryAsync(IsLeader:{IsLeader}) -> Delivering replicated Message({replicatedMessage.Message.GetType().Name}|{replicatedMessage.Message.GetHashCode()})...");
 
-                OnMessageReceived?.Invoke(this, replicatedMessage);
+                        //Invoke directly to throw any exceptions during command processing into the leader caller context.
+                        OnMessageReceived?.Invoke(this, replicatedMessage);
+
+                        _logger.LogDebug($"AppendEntryAsync(IsLeader:{IsLeader}) -> Replicated Message({replicatedMessage.Message.GetType().Name}|{replicatedMessage.Message.GetHashCode()}) successfully delivered.");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"AppendEntryAsync(IsLeader:{IsLeader}) -> Exception({ex.GetType().Name}) for Message({replicatedMessage.Message.GetType().Name}|{replicatedMessage.Message.GetHashCode()}): {ex.Message}\n{ex.StackTrace}");
+
+                        throw; //Throw to report failure to leader caller context that tried to replicate the command
+                    }
+                }
+                else
+                {
+                    ProcessMessageBuffered(replicatedMessage, index);
+                }
             }
 
             return await base.AppendEntryAsync(entry, index, skipCommitted, token);
@@ -71,55 +93,16 @@ namespace OpenStatusPage.Server.Application.Cluster.Consensus.Raft.States
 
         protected override async Task<bool> CommitEntryAsync(IRaftLogEntry entry, long index, CancellationToken token = default)
         {
-            //Leader must have already processed this message during his append phase, so skip it for him
-            if (!IsLeader && entry is ReplicatedMessage replicatedMessage)
+            if (entry is ReplicatedMessage replicatedMessage)
             {
-                if (MessageDeliveryTasks.TryGetValue(index, out var deliveryTask))
+                if (IsLeader)
                 {
-                    if (!deliveryTask.IsCompleted || !deliveryTask.Result)
-                    {
-                        //The delivery is already being executed but has not succeeded yet.
-                        // <or>
-                        //The delivery has been executed but the result was not successful, so it must be attempted again
-                        MessageDeliveryTasks.Remove(index);
-
-                        return false;
-                    }
+                    //Commit index to db on leader, message was already dispatched during append phase
+                    await PersistCommitIndexAsync(entry, index, token);
                 }
                 else
                 {
-                    MessageDeliveryTasks[index] = Task.Run(() =>
-                    {
-                        try
-                        {
-                            _logger.LogDebug($"CommitEntryAsync(IsLeader:{IsLeader}) -> Delivering replicated Message {replicatedMessage.Message.GetType().Name}...");
-
-                            OnMessageReceived?.Invoke(this, replicatedMessage);
-                        }
-                        catch (FinalFailureException ex)
-                        {
-                            //Treat this entry as committed, since this type of exception would fail again and again
-                            //The state change will simply not have happend here. Normally this case should never arise if the leader successfuly executed this.
-                            _logger.LogDebug($"CommitEntryAsync(IsLeader:{IsLeader}) -> FinalFailureException: {ex.Message}\n{ex.StackTrace}");
-                        }
-                        catch (TemporaryFailureException ex)
-                        {
-                            //The action has failed this time, but could be attempted again later. So we reject the commit for now and await another replication round
-                            _logger.LogDebug($"CommitEntryAsync(IsLeader:{IsLeader}) -> TemporaryFailureException: {ex.Message}\n{ex.StackTrace}");
-                            return false;
-                        }
-                        catch (Exception ex)
-                        {
-                            //Any kind of unknown exception will be treated as a problem that might go away by itself again
-                            //Proper validation and execution success requirement on the leader should ensure that there is no flawed request with things like NullReference or DivideByZero etc.
-                            _logger.LogDebug($"CommitEntryAsync(IsLeader:{IsLeader}) -> Exception({ex.GetType().Name}): {ex.Message}\n{ex.StackTrace}");
-                            return false;
-                        }
-
-                        return true;
-                    });
-
-                    return false;
+                    ProcessMessageBuffered(replicatedMessage, index);
                 }
             }
 
@@ -131,6 +114,46 @@ namespace OpenStatusPage.Server.Application.Cluster.Consensus.Raft.States
             if (Log.Count > 100) return true;
 
             return await base.IsCompactionRequiredAsync(endIndex, token);
+        }
+
+        public bool HasBufferedMessages()
+        {
+            return _incomingMessagesHandler is { IsCompleted: false };
+        }
+
+        protected void ProcessMessageBuffered(ReplicatedMessage message, long index)
+        {
+            _incomingMessages.Enqueue((message, index));
+
+            //A message handler is still running, we can return after submitting it to the queue.
+            if (HasBufferedMessages()) return;
+
+            _incomingMessagesHandler = Task.Run(async () =>
+            {
+                while (_incomingMessages.TryDequeue(out var incoming))
+                {
+                    var replicatedMessage = incoming.Message;
+
+                    try
+                    {
+                        _logger.LogDebug($"ProcessMessageBuffered() -> Delivering replicated Message({replicatedMessage.Message.GetType().Name}|{replicatedMessage.Message.GetHashCode()})...");
+
+                        OnMessageReceived?.Invoke(this, replicatedMessage);
+
+                        _logger.LogDebug($"ProcessMessageBuffered() -> Replicated Message({replicatedMessage.Message.GetType().Name}|{replicatedMessage.Message.GetHashCode()}) successfully delivered.");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"ProcessMessageBuffered() -> Exception({ex.GetType().Name}) for Message({replicatedMessage.Message.GetType().Name}|{replicatedMessage.Message.GetHashCode()}): {ex.Message}\n{ex.StackTrace}");
+                    }
+
+                    await PersistCommitIndexAsync(replicatedMessage, incoming.Index);
+                }
+
+                OnMessageQueueCleared.Invoke(this, null!);
+
+                _incomingMessagesHandler = null!;
+            });
         }
     }
 }

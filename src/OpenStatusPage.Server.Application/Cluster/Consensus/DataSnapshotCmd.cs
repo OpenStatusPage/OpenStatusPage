@@ -1,7 +1,6 @@
 ﻿using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using OpenStatusPage.Server.Application.Cluster.Communication;
-using OpenStatusPage.Server.Persistence;
 
 namespace OpenStatusPage.Server.Application.Cluster.Consensus
 {
@@ -59,29 +58,29 @@ namespace OpenStatusPage.Server.Application.Cluster.Consensus
 
                 using var scope = _serviceProvider.CreateScope();
 
-                using var transaction = await scope.ServiceProvider
+                /*using var transaction = await scope.ServiceProvider
                     .GetRequiredService<ApplicationDbContext>()
                     .Database.BeginTransactionAsync(cancellationToken);
 
                 try
+                {*/
+                foreach (var dataProvider in dataProviders)
                 {
-                    foreach (var dataProvider in dataProviders)
+                    var providerInstance = scope.ServiceProvider.GetRequiredService(dataProvider) as ISnapshotDataProvider;
+
+                    if (request.DataConstructionMessages.ContainsKey(dataProvider.Name))
                     {
-                        var providerInstance = scope.ServiceProvider.GetRequiredService(dataProvider) as ISnapshotDataProvider;
-
-                        if (request.DataConstructionMessages.ContainsKey(dataProvider.Name))
-                        {
-                            await providerInstance.ApplyDataAsync(request.DataConstructionMessages[dataProvider.Name], cancellationToken);
-                        }
+                        await providerInstance.ApplyDataAsync(request.DataConstructionMessages[dataProvider.Name], cancellationToken);
                     }
-
+                }
+                /*
                     await transaction.CommitAsync(cancellationToken);
                 }
                 catch (Exception ex)
                 {
                     await transaction.RollbackAsync(cancellationToken);
                     throw;
-                }
+                }*/
 
                 return Unit.Value;
             }

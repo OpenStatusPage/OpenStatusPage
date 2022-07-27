@@ -2,25 +2,32 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OpenStatusPage.Server.Persistence.Drivers;
 
 #nullable disable
 
-namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
+namespace OpenStatusPage.Server.Persistence.Migrations.PostgreSql
 {
-    [DbContext(typeof(SQLiteDbContext))]
-    partial class SQLiteDbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(PostgreSqlDbContext))]
+    [Migration("20220406083813_StatuspageDisplayName")]
+    partial class StatuspageDisplayName
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "6.0.2");
+            modelBuilder
+                .HasAnnotation("ProductVersion", "6.0.2")
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
+
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("OpenStatusPage.Server.Domain.Entities.Cluster.ClusterMember", b =>
                 {
                     b.Property<string>("Endpoint")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.HasKey("Endpoint");
 
@@ -30,10 +37,10 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
             modelBuilder.Entity("OpenStatusPage.Server.Domain.Entities.Cluster.RaftLogMetaEntry", b =>
                 {
                     b.Property<long>("Index")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint");
 
                     b.Property<long>("Term")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint");
 
                     b.HasKey("Index");
 
@@ -43,24 +50,24 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
             modelBuilder.Entity("OpenStatusPage.Server.Domain.Entities.Configuration.ApplicationSettings", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
-                    b.Property<ushort>("DaysIncidentHistory")
-                        .HasColumnType("INTEGER");
+                    b.Property<int>("DaysIncidentHistory")
+                        .HasColumnType("integer");
 
-                    b.Property<ushort>("DaysMonitorHistory")
-                        .HasColumnType("INTEGER");
+                    b.Property<int>("DaysMonitorHistory")
+                        .HasColumnType("integer");
 
                     b.Property<string>("DefaultStatusPageId")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<TimeSpan>("StatusFlushInterval")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("interval");
 
                     b.Property<long>("Version")
                         .IsConcurrencyToken()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
@@ -72,21 +79,21 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
             modelBuilder.Entity("OpenStatusPage.Server.Domain.Entities.Incidents.Incident", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("From")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<DateTimeOffset?>("Until")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<long>("Version")
                         .IsConcurrencyToken()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
@@ -96,27 +103,27 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
             modelBuilder.Entity("OpenStatusPage.Server.Domain.Entities.Incidents.IncidentTimelineItem", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("AdditionalInformation")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("DateTime")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("IncidentId")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<int>("Severity")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<long>("Version")
                         .IsConcurrencyToken()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
@@ -128,37 +135,37 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
             modelBuilder.Entity("OpenStatusPage.Server.Domain.Entities.Monitors.MonitorBase", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<bool>("Enabled")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("boolean");
 
                     b.Property<TimeSpan>("Interval")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("interval");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
-                    b.Property<ushort?>("Retries")
-                        .HasColumnType("INTEGER");
+                    b.Property<int?>("Retries")
+                        .HasColumnType("integer");
 
                     b.Property<TimeSpan?>("RetryInterval")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("interval");
 
                     b.Property<string>("Tags")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<TimeSpan?>("Timeout")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("interval");
 
                     b.Property<long>("Version")
                         .IsConcurrencyToken()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint");
 
                     b.Property<int>("WorkerCount")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -168,21 +175,21 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
             modelBuilder.Entity("OpenStatusPage.Server.Domain.Entities.Monitors.MonitorRule", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("MonitorId")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
-                    b.Property<ushort>("OrderIndex")
-                        .HasColumnType("INTEGER");
+                    b.Property<int>("OrderIndex")
+                        .HasColumnType("integer");
 
                     b.Property<long>("Version")
                         .IsConcurrencyToken()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint");
 
                     b.Property<int>("ViolationStatus")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -194,10 +201,10 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
             modelBuilder.Entity("OpenStatusPage.Server.Domain.Entities.Notifications.History.NotificationHistoryRecord", b =>
                 {
                     b.Property<string>("MonitorId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("StatusUtc")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("MonitorId", "StatusUtc");
 
@@ -207,21 +214,21 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
             modelBuilder.Entity("OpenStatusPage.Server.Domain.Entities.Notifications.Providers.NotificationProvider", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<bool>("DefaultForNewMonitors")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("Enabled")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<long>("Version")
                         .IsConcurrencyToken()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
@@ -231,13 +238,13 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
             modelBuilder.Entity("OpenStatusPage.Server.Domain.Entities.StatusHistory.StatusHistoryRecord", b =>
                 {
                     b.Property<string>("MonitorId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("FromUtc")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.HasKey("MonitorId", "FromUtc");
 
@@ -247,26 +254,26 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
             modelBuilder.Entity("OpenStatusPage.Server.Domain.Entities.StatusPages.LabeledMonitor", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("Label")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("MonitorId")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("MonitorSummaryId")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<int>("OrderIndex")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<long>("Version")
                         .IsConcurrencyToken()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
@@ -280,25 +287,25 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
             modelBuilder.Entity("OpenStatusPage.Server.Domain.Entities.StatusPages.MonitorSummary", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<int>("OrderIndex")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<bool>("ShowHistory")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("StatusPageId")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<long>("Version")
                         .IsConcurrencyToken()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
@@ -310,42 +317,42 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
             modelBuilder.Entity("OpenStatusPage.Server.Domain.Entities.StatusPages.StatusPage", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<int?>("DaysIncidentTimeline")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<int>("DaysStatusHistory")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<int?>("DaysUpcomingMaintenances")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Description")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("DisplayName")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<bool>("EnableGlobalSummary")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("EnableIncidentTimeline")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("EnableUpcomingMaintenances")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("Password")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<long>("Version")
                         .IsConcurrencyToken()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
@@ -355,10 +362,10 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
             modelBuilder.Entity("OpenStatusPage.Server.Persistence.Configurations.IncidentConfiguration+IncidentMonitorMapping", b =>
                 {
                     b.Property<string>("MonitorBaseId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("IncidentId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.HasKey("MonitorBaseId", "IncidentId");
 
@@ -370,10 +377,10 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
             modelBuilder.Entity("OpenStatusPage.Server.Persistence.Configurations.MonitorConfiguration+MonitorNotificationMapping", b =>
                 {
                     b.Property<string>("MonitorBaseId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("NotificationProviderId")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.HasKey("MonitorBaseId", "NotificationProviderId");
 
@@ -388,13 +395,13 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
 
                     b.Property<string>("Hostname")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<int>("RecordType")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Resolvers")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.ToTable("DnsMonitors", (string)null);
                 });
@@ -404,11 +411,11 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
                     b.HasBaseType("OpenStatusPage.Server.Domain.Entities.Monitors.MonitorRule");
 
                     b.Property<int>("ComparisonType")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<string>("ComparisonValue")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.ToTable("DnsRecordRules", (string)null);
                 });
@@ -418,29 +425,29 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
                     b.HasBaseType("OpenStatusPage.Server.Domain.Entities.Monitors.MonitorBase");
 
                     b.Property<string>("AuthenticationAdditional")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("AuthenticationBase")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<int>("AuthenticationScheme")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Body")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("Headers")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
-                    b.Property<ushort>("MaxRedirects")
-                        .HasColumnType("INTEGER");
+                    b.Property<int>("MaxRedirects")
+                        .HasColumnType("integer");
 
                     b.Property<int>("Method")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Url")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.ToTable("HttpMonitors", (string)null);
                 });
@@ -450,11 +457,11 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
                     b.HasBaseType("OpenStatusPage.Server.Domain.Entities.Monitors.MonitorRule");
 
                     b.Property<int>("ComparisonType")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<string>("ComparisonValue")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.ToTable("ResponseBodyRules", (string)null);
                 });
@@ -464,14 +471,14 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
                     b.HasBaseType("OpenStatusPage.Server.Domain.Entities.Monitors.MonitorRule");
 
                     b.Property<int>("ComparisonType")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<string>("ComparisonValue")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("Key")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.ToTable("ResponseHeaderRules", (string)null);
                 });
@@ -481,10 +488,10 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
                     b.HasBaseType("OpenStatusPage.Server.Domain.Entities.Monitors.MonitorRule");
 
                     b.Property<int>("CheckType")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<TimeSpan?>("MinValidTimespan")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("interval");
 
                     b.ToTable("SslCertificateRules", (string)null);
                 });
@@ -493,11 +500,11 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
                 {
                     b.HasBaseType("OpenStatusPage.Server.Domain.Entities.Monitors.MonitorRule");
 
-                    b.Property<ushort?>("UpperRangeValue")
-                        .HasColumnType("INTEGER");
+                    b.Property<int?>("UpperRangeValue")
+                        .HasColumnType("integer");
 
-                    b.Property<ushort>("Value")
-                        .HasColumnType("INTEGER");
+                    b.Property<int>("Value")
+                        .HasColumnType("integer");
 
                     b.ToTable("StatusCodeRules", (string)null);
                 });
@@ -508,7 +515,7 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
 
                     b.Property<string>("Hostname")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.ToTable("PingMonitors", (string)null);
                 });
@@ -518,10 +525,10 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
                     b.HasBaseType("OpenStatusPage.Server.Domain.Entities.Monitors.MonitorRule");
 
                     b.Property<int>("ComparisonType")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
-                    b.Property<ushort>("ComparisonValue")
-                        .HasColumnType("INTEGER");
+                    b.Property<int>("ComparisonValue")
+                        .HasColumnType("integer");
 
                     b.ToTable("ResponseTimeRules", (string)null);
                 });
@@ -531,11 +538,11 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
                     b.HasBaseType("OpenStatusPage.Server.Domain.Entities.Monitors.MonitorRule");
 
                     b.Property<int>("ComparisonType")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<string>("ComparisonValue")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.ToTable("SshCommandResultRules", (string)null);
                 });
@@ -545,24 +552,24 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
                     b.HasBaseType("OpenStatusPage.Server.Domain.Entities.Monitors.MonitorBase");
 
                     b.Property<string>("Command")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("Hostname")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("Password")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
-                    b.Property<ushort?>("Port")
-                        .HasColumnType("INTEGER");
+                    b.Property<int?>("Port")
+                        .HasColumnType("integer");
 
                     b.Property<string>("PrivateKey")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("Username")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.ToTable("SshMonitors", (string)null);
                 });
@@ -573,10 +580,10 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
 
                     b.Property<string>("Hostname")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
-                    b.Property<ushort>("Port")
-                        .HasColumnType("INTEGER");
+                    b.Property<int>("Port")
+                        .HasColumnType("integer");
 
                     b.ToTable("TcpMonitors", (string)null);
                 });
@@ -586,11 +593,11 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
                     b.HasBaseType("OpenStatusPage.Server.Domain.Entities.Monitors.MonitorRule");
 
                     b.Property<int>("ComparisonType")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<byte[]>("ExpectedBytes")
                         .IsRequired()
-                        .HasColumnType("BLOB");
+                        .HasColumnType("bytea");
 
                     b.ToTable("ResponseBytesRules", (string)null);
                 });
@@ -601,14 +608,14 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
 
                     b.Property<string>("Hostname")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
-                    b.Property<ushort>("Port")
-                        .HasColumnType("INTEGER");
+                    b.Property<int>("Port")
+                        .HasColumnType("integer");
 
                     b.Property<byte[]>("RequestBytes")
                         .IsRequired()
-                        .HasColumnType("BLOB");
+                        .HasColumnType("bytea");
 
                     b.ToTable("UdpMonitors", (string)null);
                 });
@@ -618,34 +625,34 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
                     b.HasBaseType("OpenStatusPage.Server.Domain.Entities.Notifications.Providers.NotificationProvider");
 
                     b.Property<string>("DisplayName")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("FromAddress")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("Hostname")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("Password")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
-                    b.Property<ushort?>("Port")
-                        .HasColumnType("INTEGER");
+                    b.Property<int?>("Port")
+                        .HasColumnType("integer");
 
                     b.Property<string>("ReceiversBCC")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("ReceiversCC")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("ReceiversDirect")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("Username")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.ToTable("SmtpEmailProviders", (string)null);
                 });
@@ -655,11 +662,11 @@ namespace OpenStatusPage.Server.Persistence.Migrations.SQLite
                     b.HasBaseType("OpenStatusPage.Server.Domain.Entities.Notifications.Providers.NotificationProvider");
 
                     b.Property<string>("Headers")
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("Url")
                         .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.ToTable("WebhookProviders", (string)null);
                 });

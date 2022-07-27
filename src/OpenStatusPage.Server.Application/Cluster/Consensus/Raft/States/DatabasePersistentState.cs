@@ -42,43 +42,13 @@ namespace OpenStatusPage.Server.Application.Cluster.Consensus.Raft.States
                     .OrderByDescending(x => x.Index)
                     .FirstOrDefaultAsync(token);
 
-                //If no meta data available, consider the existing commands application defaults
-                if (latestEntry == null) return (raftLogEntry, 0);
-
                 //Set term from db so the one who knows the most recent data will be elected leader in the inital election
-                raftLogEntry.Term = latestEntry.Term;
+                raftLogEntry.Term = latestEntry?.Term ?? 1;
 
-                return (raftLogEntry, latestEntry.Index);
+                return (raftLogEntry, latestEntry?.Index ?? 1);
             }
 
             return await base.ProcessSnapshotAsync(snapshot, endIndex, token);
-        }
-
-        protected override async Task<bool> CommitEntryAsync(IRaftLogEntry entry, long index, CancellationToken token = default)
-        {
-            using var scope = _serviceProvider.CreateScope();
-            var _applicationDbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-            //Check if this index was already marked as commited in the db (can happen if two raft logs share the same db)
-            if (!_applicationDbContext.RaftLogMetaEntries.Any(x => x.Index == index))
-            {
-                try
-                {
-                    _applicationDbContext.Add(new RaftLogMetaEntry
-                    {
-                        Index = index,
-                        Term = entry.Term
-                    });
-
-                    await _applicationDbContext.SaveChangesAsync(token);
-                }
-                catch
-                {
-                    //Catch in case the raft log entry was already added in a shared db
-                }
-            }
-
-            return await base.CommitEntryAsync(entry, index, token);
         }
 
         public override async ValueTask CompactLogAsync(long endIndex, CancellationToken token = default)
@@ -101,6 +71,31 @@ namespace OpenStatusPage.Server.Application.Cluster.Consensus.Raft.States
             }
 
             await base.CompactLogAsync(endIndex, token);
+        }
+
+        protected async Task PersistCommitIndexAsync(IRaftLogEntry entry, long index, CancellationToken token = default)
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var _applicationDbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            //Check if this index was already marked as commited in the db (can happen if two raft logs share the same db)
+            if (!_applicationDbContext.RaftLogMetaEntries.Any(x => x.Index == index))
+            {
+                try
+                {
+                    _applicationDbContext.Add(new RaftLogMetaEntry
+                    {
+                        Index = index,
+                        Term = entry.Term
+                    });
+
+                    await _applicationDbContext.SaveChangesAsync(token);
+                }
+                catch
+                {
+                    //Catch in case the raft log entry was already added in a shared db
+                }
+            }
         }
     }
 }

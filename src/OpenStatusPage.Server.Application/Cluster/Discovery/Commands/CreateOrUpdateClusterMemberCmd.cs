@@ -2,12 +2,10 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using OpenStatusPage.Server.Application.Cluster.Communication;
-using OpenStatusPage.Server.Application.Misc.Attributes;
 using OpenStatusPage.Server.Domain.Entities.Cluster;
 
 namespace OpenStatusPage.Server.Application.Cluster.Discovery.Commands
 {
-    [RequiresDbTransaction]
     public class CreateOrUpdateClusterMemberCmd : MessageBase
     {
         public ClusterMember Data { get; set; }

@@ -2,11 +2,9 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using OpenStatusPage.Server.Application.Cluster.Communication;
-using OpenStatusPage.Server.Application.Misc.Attributes;
 
 namespace OpenStatusPage.Server.Application.Cluster.Discovery.Commands
 {
-    [RequiresDbTransaction]
     public class DeleteClusterMemberCmd : MessageBase
     {
         public Uri ClusterMemberEndpoint { get; set; }

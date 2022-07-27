@@ -2,9 +2,10 @@
 using DotNext.IO.Log;
 using DotNext.Net.Cluster;
 using DotNext.Net.Cluster.Consensus.Raft;
-using DotNext.Runtime.CompilerServices;
 using DotNext.Threading;
 using OpenStatusPage.Server.Application.Cluster.Consensus.Raft.LogEntries;
+
+using BoxedClusterMemberId = DotNext.Runtime.BoxedValue<DotNext.Net.Cluster.ClusterMemberId>;
 
 namespace OpenStatusPage.Server.Application.Cluster.Consensus.Raft.States
 {
@@ -366,13 +367,13 @@ namespace OpenStatusPage.Server.Application.Cluster.Consensus.Raft.States
 
         private long _term;
 
-        private volatile Shared<ClusterMemberId>? _lastVote;
+        private volatile BoxedClusterMemberId? _lastVote;
 
         public long Term => _term.VolatileRead();
 
-        public bool IsVotedFor(in ClusterMemberId? id)
+        public bool IsVotedFor(in ClusterMemberId id)
         {
-            return _lastVote is null || id.HasValue && _lastVote.Value.Equals(id.GetValueOrDefault());
+            return _lastVote is null || _lastVote.Value == id;
         }
 
         public ValueTask<long> IncrementTermAsync()
@@ -382,7 +383,7 @@ namespace OpenStatusPage.Server.Application.Cluster.Consensus.Raft.States
 
         public ValueTask<long> IncrementTermAsync(ClusterMemberId member)
         {
-            _lastVote = member;
+            _lastVote = BoxedClusterMemberId.Box(member);
             return new(_term.IncrementAndGet());
         }
 
@@ -395,9 +396,9 @@ namespace OpenStatusPage.Server.Application.Cluster.Consensus.Raft.States
             return new();
         }
 
-        public ValueTask UpdateVotedForAsync(ClusterMemberId? member)
+        public ValueTask UpdateVotedForAsync(ClusterMemberId id)
         {
-            _lastVote = member;
+            _lastVote = BoxedClusterMemberId.Box(id);
 
             return new();
         }

@@ -3,12 +3,10 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using OpenStatusPage.Server.Application.Cluster.Communication;
-using OpenStatusPage.Server.Application.Misc.Attributes;
 using OpenStatusPage.Server.Domain.Entities.StatusPages;
 
 namespace OpenStatusPage.Server.Application.StatusPages.Commands
 {
-    [RequiresDbTransaction]
     public class CreateOrUpdateStatusPageCmd : MessageBase
     {
         public StatusPage Data { get; set; }

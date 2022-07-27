@@ -20,6 +20,7 @@ namespace OpenStatusPage.Server.Application.Cluster.Consensus.Raft
     public class RaftService : IConsensusService, ISingletonService
     {
         private readonly IRaftHttpCluster _raftCluster;
+        private readonly EnvironmentSettings _environmentSettings;
         private readonly ClusterMemberLifetime _clusterMemberLifetime;
 
         public event EventHandler OnStart;
@@ -30,6 +31,8 @@ namespace OpenStatusPage.Server.Application.Cluster.Consensus.Raft
 
         public event EventHandler<MessageBase> OnReplicatedMessage;
 
+        public event EventHandler OnMessageQueueCleared;
+
         public event EventHandler<IClusterMember> OnMemberJoined;
 
         public event EventHandler<IClusterMember> OnMemberLeft;
@@ -38,9 +41,12 @@ namespace OpenStatusPage.Server.Application.Cluster.Consensus.Raft
 
         public bool IsLeader { get; set; }
 
-        public RaftService(IRaftHttpCluster raftCluster, IClusterMemberLifetime clusterMemberLifetime)
+        public RaftService(IRaftHttpCluster raftCluster,
+                           IClusterMemberLifetime clusterMemberLifetime,
+                           EnvironmentSettings environmentSettings)
         {
             _raftCluster = raftCluster;
+            _environmentSettings = environmentSettings;
             _clusterMemberLifetime = (ClusterMemberLifetime)clusterMemberLifetime;
 
             _clusterMemberLifetime.OnStart += (sender, data) => OnClusterStart(data.cluster, data.metadata);
@@ -69,12 +75,8 @@ namespace OpenStatusPage.Server.Application.Cluster.Consensus.Raft
 
                 options.ProtocolPath = $"{environmentSettings.PublicEndpoint.LocalPath}cluster-message-bus/v1/consensus/raft";
 
-                //options.HeartbeatThreshold = 0.5;
-                options.LowerElectionTimeout = environmentSettings.ConnectionTimeout;//2500;
+                options.LowerElectionTimeout = environmentSettings.ConnectionTimeout;
                 options.UpperElectionTimeout = options.LowerElectionTimeout * 2;
-
-                options.Metadata.Add("memberid", environmentSettings.Id);
-                options.Metadata.Add("membertags", string.Join(';', environmentSettings.Tags));
             });
 
             return builder;
@@ -104,6 +106,10 @@ namespace OpenStatusPage.Server.Application.Cluster.Consensus.Raft
 
         public void OnClusterStart(IRaftCluster cluster, IDictionary<string, string> metadata)
         {
+            //Add meta data
+            metadata.Add("memberid", _environmentSettings.Id);
+            metadata.Add("membertags", string.Join(';', _environmentSettings.Tags));
+
             //Subscribe cluster events
             cluster.PeerDiscovered += (peerMesh, peer) =>
             {
@@ -132,11 +138,23 @@ namespace OpenStatusPage.Server.Application.Cluster.Consensus.Raft
                 }
             };
 
+            (cluster.AuditTrail as PersistentMessageReplicatorState).OnMessageQueueCleared += (auditTrail, args) =>
+            {
+                OnMessageQueueCleared?.Invoke(this, args);
+            };
+
             cluster.ReplicationCompleted += (cluster, member) =>
             {
-                if (cluster.AuditTrail.LastCommittedEntryIndex >= cluster.AuditTrail.LastUncommittedEntryIndex)
+                var auditTrail = cluster.AuditTrail as PersistentMessageReplicatorState;
+
+                if (auditTrail.LastCommittedEntryIndex >= auditTrail.LastUncommittedEntryIndex)
                 {
                     OnReplicationCompleted?.Invoke(cluster, default!);
+                }
+
+                if (!auditTrail.HasBufferedMessages())
+                {
+                    OnMessageQueueCleared?.Invoke(this, null!);
                 }
             };
 
