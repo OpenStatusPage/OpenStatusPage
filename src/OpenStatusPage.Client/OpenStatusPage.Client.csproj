@@ -10,13 +10,13 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="11.0.0" />
-    <PackageReference Include="FluentValidation" Version="10.3.6" />
-    <PackageReference Include="HtmlSanitizer" Version="7.1.488" />
-    <PackageReference Include="Markdig" Version="0.27.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.2" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="6.0.2" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.Extensions.Localization" Version="6.0.2" />
-	<PackageReference Include="MudBlazor" Version="6.0.7" />
+    <PackageReference Include="FluentValidation" Version="11.1.0" />
+    <PackageReference Include="HtmlSanitizer" Version="7.1.542" />
+    <PackageReference Include="Markdig" Version="0.30.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="6.0.7" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.Localization" Version="6.0.7" />
+	<PackageReference Include="MudBlazor" Version="6.0.12" />
   </ItemGroup>
 
   <ItemGroup>

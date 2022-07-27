@@ -95,7 +95,7 @@ namespace OpenStatusPage.Server.Application.Cluster.Communication.Http
         {
             return new JsonMessageWrapper()
             {
-                Type = $"{request.GetType().FullName}", //todo do not send full name but build local lookup index table that will be the same on all clients?
+                Type = $"{request.GetType().FullName}",
                 Value = JsonSerializer.Serialize(request)
             };
         }

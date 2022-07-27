@@ -33,12 +33,19 @@ namespace OpenStatusPage.Server.Application.Monitoring.Worker
 
         public async Task HandleTaskAssignmentAsync(TaskAssignmentCmd taskAssignment, CancellationToken cancellationToken = default)
         {
+            //See if the task assignment contains our local worker, if not, ignore
+            if (!taskAssignment.WorkerIds.Contains(_localWorker.Id)) return;
+
             if (_clusterService.IsOperational)
             {
+                _logger.LogDebug($"HandleTaskAssignmentAsync({taskAssignment.Id}|Direct) for Monitor({taskAssignment.MonitorId}|Version {taskAssignment.MonitorVersion})");
+
                 await StartTaskAssignmentAsync(taskAssignment, cancellationToken);
             }
             else
             {
+                _logger.LogDebug($"HandleTaskAssignmentAsync({taskAssignment.Id}|Buffered) for Monitor({taskAssignment.MonitorId}|Version {taskAssignment.MonitorVersion})");
+
                 //Store the assignments until the cluster member is operational
                 AssignmentBuffer.Add(taskAssignment);
             }
@@ -122,6 +129,8 @@ namespace OpenStatusPage.Server.Application.Monitoring.Worker
         {
             Task.Run(() =>
             {
+                _logger.LogDebug($"WorkerService::OnOperational() -> Processing buffered assignments...");
+
                 //Keep only the most recent assignments per monitor
                 var assignments = AssignmentBuffer
                     .GroupBy(x => x.MonitorId)
@@ -138,9 +147,6 @@ namespace OpenStatusPage.Server.Application.Monitoring.Worker
 
         protected async Task StartTaskAssignmentAsync(TaskAssignmentCmd taskAssignment, CancellationToken cancellationToken = default)
         {
-            //See if the task assignment contains our local worker, if not, ignore
-            if (!taskAssignment.WorkerIds.Contains(_localWorker.Id)) return;
-
             ActiveTaskAssignments.Add(taskAssignment);
 
             var key = $"{taskAssignment.MonitorId}:{taskAssignment.MonitorVersion}";
@@ -151,8 +157,19 @@ namespace OpenStatusPage.Server.Application.Monitoring.Worker
             //Check one last time before starting the thread if the operation was cancelled
             if (cancellationToken.IsCancellationRequested) return;
 
+            _logger.LogDebug($"Starting task for Monitor({taskAssignment.MonitorId}| Version {taskAssignment.MonitorVersion}) ...");
+
             //Start the worker task
             MonitoringTasks[key] = new(taskAssignment.MonitorId, taskAssignment.MonitorVersion, _logger, _scopedMediator);
+        }
+
+        public async Task<(bool?, DateTimeOffset?, DateTimeOffset?, DateTimeOffset?)> GetMonitorTaskStatusAsync(string monitorId, long monitorVersion, CancellationToken cancellationToken = default)
+        {
+            var monitorTask = MonitoringTasks.GetValueOrDefault($"{monitorId}:{monitorVersion}", null!);
+
+            if (monitorTask == null) return default;
+
+            return (monitorTask.Active, monitorTask.FirstExecutionDispatched, monitorTask.LastExecutionDispatched, monitorTask.NextScheduledExecution);
         }
     }
 }

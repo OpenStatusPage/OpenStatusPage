@@ -9,6 +9,11 @@ namespace OpenStatusPage.Server.Domain.Entities.StatusPages
         public string Name { get; set; }
 
         /// <summary>
+        /// Optional display name that is different from the URL based route name
+        /// </summary>
+        public string? DisplayName { get; set; }
+
+        /// <summary>
         /// Optional password if page is to be protected
         /// </summary>
         public string? Password { get; set; }

@@ -78,8 +78,8 @@ namespace OpenStatusPage.Server
             services.AddAutoMapper(typeof(Startup).Assembly);
             services.AddValidatorsFromAssembly(applicationAssembly);
             services
-                .AddScoped(typeof(IPipelineBehavior<,>), typeof(FluentValidationPipelineBehavior<,>))
-                .AddScoped(typeof(IPipelineBehavior<,>), typeof(DbTransactionBehavior<,>));
+                .AddScoped(typeof(IPipelineBehavior<,>), typeof(FluentValidationPipelineBehavior<,>));
+            //.AddScoped(typeof(IPipelineBehavior<,>), typeof(DbTransactionBehavior<,>));
 
             //Add transient services
             foreach (var transient in applicationAssembly.GetTypes().Where(x => x.IsAssignableTo(typeof(ITransientService)) && !x.IsInterface))

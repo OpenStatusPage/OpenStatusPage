@@ -24,8 +24,6 @@ namespace OpenStatusPage.Client.Pages._Components
         {
             OnClick = AsyncAction;
 
-            //Todo add tests for this
-
             await base.OnParametersSetAsync();
         }
 

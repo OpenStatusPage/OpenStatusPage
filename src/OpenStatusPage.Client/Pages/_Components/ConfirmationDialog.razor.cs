@@ -27,7 +27,6 @@ namespace OpenStatusPage.Client.Pages._Components
         [Parameter]
         public string CancelIcon { get; set; }
 
-        //Todo we might be able to make this testable
         void SubmitDialog() => MudDialog.Close(DialogResult.Ok(true));
 
         void CancelDialog() => MudDialog.Cancel();

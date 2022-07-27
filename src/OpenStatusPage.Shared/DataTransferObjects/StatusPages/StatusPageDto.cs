@@ -4,6 +4,8 @@ public class StatusPageDto : EntityBaseDto
 {
     public string Name { get; set; }
 
+    public string DisplayName { get; set; }
+
     /// <summary>
     /// Optional description at the top of the page
     /// </summary>

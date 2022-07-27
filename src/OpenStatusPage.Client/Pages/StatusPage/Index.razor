@@ -71,9 +71,11 @@ else if(StatusPageConfiguration == null)
 }
 else
 {
-    <PageTitle>@StatusPageConfiguration.Name</PageTitle>
+    var name = !string.IsNullOrWhiteSpace(StatusPageConfiguration.DisplayName) ? StatusPageConfiguration.DisplayName : StatusPageConfiguration.Name;
+
+    <PageTitle>@name</PageTitle>
     <div class="d-flex justify-space-between align-center flex-wrap">
-        <MudText Typo="Typo.h3">@StatusPageConfiguration.Name</MudText>
+        <MudText Typo="Typo.h3">@name</MudText>
 
         <div class="d-flex mt-2">
             <div>

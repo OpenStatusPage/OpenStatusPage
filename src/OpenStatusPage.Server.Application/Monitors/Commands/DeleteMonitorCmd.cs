@@ -2,11 +2,9 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using OpenStatusPage.Server.Application.Cluster.Communication;
-using OpenStatusPage.Server.Application.Misc.Attributes;
 
 namespace OpenStatusPage.Server.Application.Monitors.Commands
 {
-    [RequiresDbTransaction]
     public class DeleteMonitorCmd : MessageBase
     {
         public string MonitorId { get; set; }

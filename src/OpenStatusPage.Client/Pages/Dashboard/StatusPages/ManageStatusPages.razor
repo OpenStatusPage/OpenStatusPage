@@ -78,6 +78,13 @@
                                     @bind-Value="StatusPageModel.Name" 
                                     Validation="@Validator.ValidateValue"
                                     For="@(() => StatusPageModel.Name)"/>
+                                
+                                <MudTextField 
+                                    Label="Display name" 
+                                    Class="mt-4"
+                                    @bind-Value="StatusPageModel.DisplayName" 
+                                    Validation="@Validator.ValidateValue"
+                                    For="@(() => StatusPageModel.DisplayName)"/>
 
                                 <MudTextField 
                                     Label="Password" 

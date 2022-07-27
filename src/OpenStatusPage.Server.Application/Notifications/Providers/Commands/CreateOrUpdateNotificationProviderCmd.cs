@@ -3,12 +3,10 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using OpenStatusPage.Server.Application.Cluster.Communication;
-using OpenStatusPage.Server.Application.Misc.Attributes;
 using OpenStatusPage.Server.Domain.Entities.Notifications.Providers;
 
 namespace OpenStatusPage.Server.Application.Notifications.Providers.Commands
 {
-    [RequiresDbTransaction]
     public class CreateOrUpdateNotificationProviderCmd : MessageBase
     {
         public NotificationProvider Data { get; set; }

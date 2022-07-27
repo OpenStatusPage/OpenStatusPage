@@ -17,7 +17,7 @@ namespace OpenStatusPage.Server.Persistence.Migrations.PostgreSql
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "6.0.1")
+                .HasAnnotation("ProductVersion", "6.0.2")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -196,7 +196,20 @@ namespace OpenStatusPage.Server.Persistence.Migrations.PostgreSql
                     b.ToTable("MonitorRules", (string)null);
                 });
 
-            modelBuilder.Entity("OpenStatusPage.Server.Domain.Entities.NotificationProviders.NotificationProvider", b =>
+            modelBuilder.Entity("OpenStatusPage.Server.Domain.Entities.Notifications.History.NotificationHistoryRecord", b =>
+                {
+                    b.Property<string>("MonitorId")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("StatusUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("MonitorId", "StatusUtc");
+
+                    b.ToTable("NotificationHistoryRecords");
+                });
+
+            modelBuilder.Entity("OpenStatusPage.Server.Domain.Entities.Notifications.Providers.NotificationProvider", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("text");
@@ -218,19 +231,6 @@ namespace OpenStatusPage.Server.Persistence.Migrations.PostgreSql
                     b.HasKey("Id");
 
                     b.ToTable("NotificationProviders");
-                });
-
-            modelBuilder.Entity("OpenStatusPage.Server.Domain.Entities.Notifications.History.NotificationHistoryRecord", b =>
-                {
-                    b.Property<string>("MonitorId")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("StatusUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("MonitorId", "StatusUtc");
-
-                    b.ToTable("NotificationHistoryRecords");
                 });
 
             modelBuilder.Entity("OpenStatusPage.Server.Domain.Entities.StatusHistory.StatusHistoryRecord", b =>
@@ -327,6 +327,9 @@ namespace OpenStatusPage.Server.Persistence.Migrations.PostgreSql
                         .HasColumnType("integer");
 
                     b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DisplayName")
                         .HasColumnType("text");
 
                     b.Property<bool>("EnableGlobalSummary")
@@ -615,9 +618,9 @@ namespace OpenStatusPage.Server.Persistence.Migrations.PostgreSql
                     b.ToTable("UdpMonitors", (string)null);
                 });
 
-            modelBuilder.Entity("OpenStatusPage.Server.Domain.Entities.NotificationProviders.SmtpEmailProvider", b =>
+            modelBuilder.Entity("OpenStatusPage.Server.Domain.Entities.Notifications.Providers.SmtpEmailProvider", b =>
                 {
-                    b.HasBaseType("OpenStatusPage.Server.Domain.Entities.NotificationProviders.NotificationProvider");
+                    b.HasBaseType("OpenStatusPage.Server.Domain.Entities.Notifications.Providers.NotificationProvider");
 
                     b.Property<string>("DisplayName")
                         .HasColumnType("text");
@@ -652,9 +655,9 @@ namespace OpenStatusPage.Server.Persistence.Migrations.PostgreSql
                     b.ToTable("SmtpEmailProviders", (string)null);
                 });
 
-            modelBuilder.Entity("OpenStatusPage.Server.Domain.Entities.NotificationProviders.WebhookProvider", b =>
+            modelBuilder.Entity("OpenStatusPage.Server.Domain.Entities.Notifications.Providers.WebhookProvider", b =>
                 {
-                    b.HasBaseType("OpenStatusPage.Server.Domain.Entities.NotificationProviders.NotificationProvider");
+                    b.HasBaseType("OpenStatusPage.Server.Domain.Entities.Notifications.Providers.NotificationProvider");
 
                     b.Property<string>("Headers")
                         .HasColumnType("text");
@@ -774,7 +777,7 @@ namespace OpenStatusPage.Server.Persistence.Migrations.PostgreSql
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("OpenStatusPage.Server.Domain.Entities.NotificationProviders.NotificationProvider", null)
+                    b.HasOne("OpenStatusPage.Server.Domain.Entities.Notifications.Providers.NotificationProvider", null)
                         .WithMany()
                         .HasForeignKey("NotificationProviderId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -907,20 +910,20 @@ namespace OpenStatusPage.Server.Persistence.Migrations.PostgreSql
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("OpenStatusPage.Server.Domain.Entities.NotificationProviders.SmtpEmailProvider", b =>
+            modelBuilder.Entity("OpenStatusPage.Server.Domain.Entities.Notifications.Providers.SmtpEmailProvider", b =>
                 {
-                    b.HasOne("OpenStatusPage.Server.Domain.Entities.NotificationProviders.NotificationProvider", null)
+                    b.HasOne("OpenStatusPage.Server.Domain.Entities.Notifications.Providers.NotificationProvider", null)
                         .WithOne()
-                        .HasForeignKey("OpenStatusPage.Server.Domain.Entities.NotificationProviders.SmtpEmailProvider", "Id")
+                        .HasForeignKey("OpenStatusPage.Server.Domain.Entities.Notifications.Providers.SmtpEmailProvider", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("OpenStatusPage.Server.Domain.Entities.NotificationProviders.WebhookProvider", b =>
+            modelBuilder.Entity("OpenStatusPage.Server.Domain.Entities.Notifications.Providers.WebhookProvider", b =>
                 {
-                    b.HasOne("OpenStatusPage.Server.Domain.Entities.NotificationProviders.NotificationProvider", null)
+                    b.HasOne("OpenStatusPage.Server.Domain.Entities.Notifications.Providers.NotificationProvider", null)
                         .WithOne()
-                        .HasForeignKey("OpenStatusPage.Server.Domain.Entities.NotificationProviders.WebhookProvider", "Id")
+                        .HasForeignKey("OpenStatusPage.Server.Domain.Entities.Notifications.Providers.WebhookProvider", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

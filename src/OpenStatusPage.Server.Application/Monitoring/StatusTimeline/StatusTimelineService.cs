@@ -6,6 +6,7 @@ using OpenStatusPage.Server.Application.Configuration.Commands;
 using OpenStatusPage.Server.Application.Misc.Mediator;
 using OpenStatusPage.Server.Application.Monitoring.Coordination.Commands;
 using OpenStatusPage.Server.Application.Monitoring.StatusTimeline.Commands;
+using OpenStatusPage.Server.Application.Monitoring.Worker.Commands;
 using OpenStatusPage.Server.Application.Monitors.Commands;
 using OpenStatusPage.Server.Application.StatusHistory.Commands;
 using OpenStatusPage.Shared.Enumerations;
@@ -353,11 +354,11 @@ namespace OpenStatusPage.Server.Application.Monitoring.StatusTimeline
 
             var syncTimeline = await GetSynchronizedTimelineAsync(monitorId, true, cancellationToken);
 
-            //Ensure that the write thread has exclusvie locking access
-            await syncTimeline.Access.WaitAsync(cancellationToken);
-
             //We recieved data that is already included in the local synced timeline, ignore ...
             if (syncTimeline.Until.HasValue && dateTime <= syncTimeline.Until.Value) return;
+
+            //Ensure that the write thread has exclusvie locking access
+            await syncTimeline.Access.WaitAsync(cancellationToken);
 
             var from = syncTimeline.LastOrDefault()?.From;
             var lastStatus = syncTimeline.LatestStatus;
@@ -481,32 +482,49 @@ namespace OpenStatusPage.Server.Application.Monitoring.StatusTimeline
 
         public async Task<ServiceStatus?> GetServiceStatusAsync(string monitorId, long monitorVersion, DateTimeOffset? at, CancellationToken cancellationToken = default)
         {
+            //Ask for current status now if nothing was specified
+            at ??= DateTimeOffset.UtcNow;
+
+            //Check if data should or will be available for the queried monitor
+            var monitorTaskStatus = await _scopedMediator.Send(new MonitorTaskStatusQuery()
+            {
+                MonitorId = monitorId,
+                MonitorVersion = monitorVersion
+            }, cancellationToken);
+
+            //Monitoring task is not known, so there are no results and will never be.
+            if (monitorTaskStatus == null) return ServiceStatus.Unknown;
+
+            if (monitorTaskStatus.FirstExecutionDispatched.HasValue)
+            {
+                //Monitor will never have data for the requested time, because the data collection started later
+                if (at < monitorTaskStatus.FirstExecutionDispatched) return ServiceStatus.Unknown;
+            }
+            else if (monitorTaskStatus.NextScheduledExecution.HasValue)
+            {
+                //Nothing was dispatched yet, but the next scheduled execution is too late for requested time
+                if (at < monitorTaskStatus.NextScheduledExecution) return ServiceStatus.Unknown;
+            }
+            else if (monitorTaskStatus.Active != true)
+            {
+                //Monitor has started but stopped already without giving any of the data
+                return ServiceStatus.Unknown;
+            }
+
             //Local timeline must always be in sync or ahead of global synced timeline
             var buffer = await GetLocalBufferAsync(monitorId, monitorVersion, false, cancellationToken);
 
-            //No buffer for that information is created (yet)
+            //No buffer for that information is created yet, try again later.
             if (buffer == null) return null;
 
             //Ensure nobody else can write while we read the timelines
             await buffer.Access.WaitAsync(cancellationToken);
 
-            //Ask for current status now if nothing was specified
-            at ??= DateTimeOffset.UtcNow;
-
             //Get the status of the last timeline item that describes the time after the "at" query parameter.
-            var status = buffer.Until.HasValue ? buffer.LastOrDefault(x => at >= x.From)?.ServiceStatus : null;
+            var status = buffer.LastOrDefault(x => at >= x.From)?.ServiceStatus;
 
             //Release access again
             buffer.Access.Release();
-
-            //See if the status asked is for a time that is known to be before any possible local worker result
-            if (status == null && buffer.Count > 0 && at < buffer.First().From)
-            {
-                status = ServiceStatus.Unknown;
-                //Todo this might not work for when barley missing a big time interval check.
-                //then e.g. for 29 minutes he keep asking until he knows this will never report for that time frame
-                //Maybe additional check if any work task could possibly have run alraedy and we are just awaiting their results
-            }
 
             return status;
         }

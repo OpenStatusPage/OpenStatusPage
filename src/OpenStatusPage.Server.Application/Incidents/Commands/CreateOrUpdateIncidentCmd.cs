@@ -2,14 +2,12 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using OpenStatusPage.Server.Application.Cluster.Communication;
-using OpenStatusPage.Server.Application.Misc.Attributes;
 using OpenStatusPage.Server.Application.Monitors;
 using OpenStatusPage.Server.Domain.Entities.Incidents;
 using OpenStatusPage.Server.Domain.Entities.Monitors;
 
 namespace OpenStatusPage.Server.Application.Incidents.Commands
 {
-    [RequiresDbTransaction]
     public class CreateOrUpdateIncidentCmd : MessageBase
     {
         public Incident Data { get; set; }

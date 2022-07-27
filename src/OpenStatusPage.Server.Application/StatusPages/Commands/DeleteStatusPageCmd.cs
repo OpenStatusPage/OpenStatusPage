@@ -2,11 +2,9 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using OpenStatusPage.Server.Application.Cluster.Communication;
-using OpenStatusPage.Server.Application.Misc.Attributes;
 
 namespace OpenStatusPage.Server.Application.StatusPages.Commands
 {
-    [RequiresDbTransaction]
     public class DeleteStatusPageCmd : MessageBase
     {
         public string StatusPageId { get; set; }

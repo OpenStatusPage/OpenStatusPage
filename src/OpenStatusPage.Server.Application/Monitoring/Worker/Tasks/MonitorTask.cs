@@ -25,6 +25,14 @@ namespace OpenStatusPage.Server.Application.Monitoring.Worker.Tasks
         private readonly CancellationTokenSource _cancellation;
         private readonly Task _runner;
 
+        public bool? Active { get; protected set; }
+
+        public DateTimeOffset? FirstExecutionDispatched { get; protected set; }
+
+        public DateTimeOffset? LastExecutionDispatched { get; protected set; }
+
+        public DateTimeOffset? NextScheduledExecution { get; protected set; }
+
         public MonitorTask(string monitorId, long monitorVersion, ILogger logger, ScopedMediatorExecutor scopedMediator)
         {
             _monitorId = monitorId;
@@ -47,6 +55,8 @@ namespace OpenStatusPage.Server.Application.Monitoring.Worker.Tasks
 
         protected async Task DoWorkAsync()
         {
+            Active = true;
+
             var monitor = (await _scopedMediator.Send(new MonitorsQuery
             {
                 Query = new(query => query
@@ -58,12 +68,16 @@ namespace OpenStatusPage.Server.Application.Monitoring.Worker.Tasks
             {
                 _logger.LogError($"Unable to load monitor({_monitorId}|Version {_monitorVersion}) configuration. Aborting task ...");
 
+                Active = false;
+
                 return;
             }
 
             if (monitor.Version > _monitorVersion)
             {
                 _logger.LogDebug($"Task assignment for monitor({_monitorId}|Version {_monitorVersion}) was oudated on arrival. Monitor version found was {monitor.Version}. Ingoring task ...");
+
+                Active = false;
 
                 return;
             }
@@ -92,7 +106,9 @@ namespace OpenStatusPage.Server.Application.Monitoring.Worker.Tasks
                 //While monitor task is running
                 while (!_cancellation.IsCancellationRequested)
                 {
-                    //_logger.LogDebug($"Monitor({monitor.Name}|{monitor.Id}) was scheduled to be checked at {performTime}.");
+                    _logger.LogDebug($"Monitor({monitor.Name}|{monitor.Id}) was scheduled to be checked at {performTime}.");
+
+                    NextScheduledExecution = performTime;
 
                     //Wait until execution
                     var waitDuration = performTime - DateTimeOffset.UtcNow;
@@ -106,6 +122,9 @@ namespace OpenStatusPage.Server.Application.Monitoring.Worker.Tasks
                         MonitorId = monitor.Id,
                         MonitorVersion = monitor.Version
                     });
+
+                    FirstExecutionDispatched ??= performTime;
+                    LastExecutionDispatched = performTime;
 
                     //Perform check non blocking and queue for the consumer to await the task
                     checks.Enqueue(check.PerformAsync(monitor, performTime, currentStatus ?? ServiceStatus.Unknown, _logger, _cancellation.Token));

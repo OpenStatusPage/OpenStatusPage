@@ -78,9 +78,7 @@ namespace OpenStatusPage.Server.Application.Notifications
                     foreach (var monitor in monitors)
                     {
                         //Get the last notification sent for this monitor
-                        var latestNotification = latestNotifications
-                            .Where(x => x.MonitorId == monitor.Id)
-                            .FirstOrDefault();
+                        var latestNotification = latestNotifications.FirstOrDefault(x => x.MonitorId == monitor.Id);
 
                         //Get all history events including the last sent one and after
                         var historyEvents = (await _scopedMediator.Send(new StatusHistoriesQuery()
@@ -106,7 +104,7 @@ namespace OpenStatusPage.Server.Application.Notifications
                             //Still the same status, continue
                             if ((previous?.Status ?? ServiceStatus.Unknown) == current.Status) continue;
 
-                            //Send notification if it is the first one ever for the monitor, or the previous one was loaded
+                            //Send notification if it is the first one ever for the monitor, or the previous one (initally the last send notification) was loaded
                             if (latestNotification == null || previous != null)
                             {
                                 var machingIncidents = incidents

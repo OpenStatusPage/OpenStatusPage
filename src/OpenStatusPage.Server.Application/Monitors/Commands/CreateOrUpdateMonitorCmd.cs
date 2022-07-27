@@ -3,7 +3,6 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using OpenStatusPage.Server.Application.Cluster.Communication;
-using OpenStatusPage.Server.Application.Misc.Attributes;
 using OpenStatusPage.Server.Application.Notifications.Providers;
 using OpenStatusPage.Server.Domain.Entities.Monitors;
 using OpenStatusPage.Server.Domain.Entities.Monitors.Dns;
@@ -17,7 +16,6 @@ using OpenStatusPage.Shared.Enumerations;
 
 namespace OpenStatusPage.Server.Application.Monitors.Commands
 {
-    [RequiresDbTransaction]
     public class CreateOrUpdateMonitorCmd : MessageBase
     {
         public MonitorBase Data { get; set; }
